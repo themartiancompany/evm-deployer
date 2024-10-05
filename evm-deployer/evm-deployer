@@ -402,8 +402,7 @@ _show_config() {
   _msg_info "              Wallet seed:   $(_get "wallet" "seed")"
   _msg_info "           Target network:   $(_get "target" "network")"
   _msg_info "                  API key:   $(_get "api" "key")"
-  _msg_info "               Target key:   $(_get "target" "key")"
-  _msg_info "             Target value:   $(_get "target" "value")"
+  _msg_info "         Target contracts:   ${target_contracts[*]}"
 }
 
 _globals
@@ -459,10 +458,6 @@ _config_user_init \
       "name")"
 _show_config
 app_opts=(
-  "$( \
-    _get \
-      "target" \
-      "command")"
   "$( \
     _get \
       "wallet" \

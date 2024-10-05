@@ -5,6 +5,8 @@ const { ethers } = require(
 _ethers = ethers;
 const _fs_utils = require(
   '../libcrash-js/fs-utils');
+_dirname = _fs_utils._dirname;
+_file_read = _fs_utils._file_read;
 const _libcrash = require(
   '../libcrash-js/crash-js');
 _app_name_get = _libcrash._app_name_get;
@@ -14,27 +16,29 @@ const _wallet_get = require(
   '../evm-wallet/wallet-get');
 const _network_provider = require(
   '../evm-wallet/network-provider');
+_provider_get = _network_provider._provider_get;
 
 function _global_variables() {
   method_args = [];
   wallet_seed = "";
   target_network = "";
   api_key = "";
+  contract_bytecode = "";
   quiet = "";
 }
 
-async function _address_get(
+async function _evm_deployer(
   _wallet_seed,
   _target_network,
   _api_key_path) {
   _wallet_password = "";
   _wallet_path = [
-    _fs_utils._dirname(
+    _dirname(
       _wallet_seed),
     "wallet.dat"].join("/");
-  _api_key = _fs_utils._file_read(
+  _api_key = _file_read(
     _api_key_path);
-  _provider = _network_provider._provider_get(
+  _provider = _provider_get(
     _target_network,
     _api_key);
   _msg = "provider '{_provider}' generated".replace(
@@ -56,21 +60,23 @@ async function _address_get(
 }
 
 function _config_show() {
-  _msg = "      Wallet seed: {wallet_seed}".replace(
-    "{wallet_seed}",
-    wallet_seed);
-  _msg_info(
-    _msg);
-  _msg = "   Target network: {target_network}".replace(
-    "{target_network}",
-    target_network);
-  _msg_info(
-    _msg);
-  _msg = "          API Key: {api_key}".replace(
-    "{api_key}",
-    api_key);
-  _msg_info(
-    _msg);
+  var _msgs=[];
+  _msgs.push(
+    "      Wallet seed: {wallet_seed}".replace(
+      "{wallet_seed}",
+      wallet_seed));
+  _msgs.push(
+    "   Target network: {target_network}".replace(
+      "{target_network}",
+      target_network));
+  _msgs.push(
+    "          API Key: {api_key}".replace(
+      "{api_key}",
+      api_key));
+  for ( _msg in _msgs ) {
+    _msg_info(
+      _msg);
+  }
 }
 
 function _cmdline_parse() {
@@ -84,18 +90,21 @@ function _cmdline_parse() {
         wallet_seed = _value;
       }
       if ( _index == 3 ) {
-        target_network = _value;
+        contract_bytecode = _value;
       }
       if ( _index == 4 ) {
+        target_network = _value;
+      }
+      if ( _index == 5 ) {
         api_key = _value;
       }
       if ( _value == "-v" ) {
         quiet = "n";
       }
   });
-  if ( wallet_seed == "" ) {
+  if ( contract_bytecode == "" ) {
     _msg_error(
-      "address-view <seed_path> (<target_network>) (<api_key>)",
+      "deployer <seed_path> <contract_bytecode> (<target_network>) (<api_key>)",
       '1');
   }
 }
@@ -104,7 +113,11 @@ _global_variables();
 app_name = _app_name_get();
 _cmdline_parse();
 _config_show();
-_address_get(
+app_opts = [
   wallet_seed,
   target_network,
-  api_key);
+  api_key,
+  contract_bytecode
+];
+_evm_deployer.apply(
+  app_opts);
