@@ -20,6 +20,7 @@ _global_variables() {
   wallet_password=""
   wallet_seed=""
   target_network=""
+  contract_bytecode=""
   api_key=""
   wallet_name=""
   color=""
@@ -110,28 +111,38 @@ _evm_deployer() {
     _wallet_seed="${3}" \
     _network="${4}" \
     _api_key_path="${5}" \
+    _contract_bytecode="${6}" \
     _target_contracts=() \
     _cmd \
     _args=() \
     _api_key \
     _network_backend
   shift \
-    5
+    6
   _target_contracts+=(
     "$@"
   )
+  _cmd="$( \
+    _get_lib)/${app_name}/deployer"
   _api_key="$( \
     _api_key_read \
       "${_api_key_path}")"
   _network_setup
-  # if [[ "${_target_command}" == "get" ]]; then
-  #   "_key_${_target_command}" \
-  #     "${_target_key}"
-  #   if [[ "${_target_key}" == "name" ]]; then
-  #     return \
-  #       0
-  #   fi
-  # fi
+  _args+=(
+    "${_wallet_seed}"
+  )
+  if [[ "${_contract_bytecode}" == "" ]]; then
+    solidity-compiler \
+      "${_target_contracts[@]}"
+  elif [[ "${_contract_bytecode}" != "" ]]; then
+    _args+=(
+      "${_contract_bytecode}"
+    )
+  fi
+  _args+=(
+    "${_network_backend}"
+    "${_api_key_path}"
+  )
   if [[ "${quiet}" != "y" ]]; then
     _args+=(
       -v
@@ -275,6 +286,10 @@ _set_overrides() {
   _secret_auto_detect \
     "password" \
     "plain"
+  _set_override \
+    "contract" \
+    "bytecode" \
+    ""
   if [[ -v override_quiet ]]; then
     quiet="${override_quiet}"
   elif [[ -z "${quiet}" ]]; then
@@ -358,6 +373,7 @@ _show_config() {
   _msg_info "              Wallet seed:   $(_get "wallet" "seed")"
   _msg_info "           Target network:   $(_get "target" "network")"
   _msg_info "                  API key:   $(_get "api" "key")"
+  _msg_info "        Contract bytecode:   $(_get "contract" "bytecode")"
   _msg_info "         Target contracts:   ${target_contracts[*]}"
 }
 
@@ -371,7 +387,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:k:cvh?' \
+    'w:p:s:n:k:B:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -380,6 +396,7 @@ while \
     s) override_wallet_seed="${OPTARG}" ;;
     n) override_target_network="${OPTARG}" ;;
     k) override_api_key="${OPTARG}" ;;
+    B) override_contract_bytecode="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
     h|?) _set_overrides && \
@@ -434,6 +451,10 @@ app_opts=(
     _get \
       "api" \
       "key")"
+  "$( \
+    _get \
+      "contract" \
+      "bytecode")"
   "${target_contracts[@]}"
 )
 _evm_deployer \

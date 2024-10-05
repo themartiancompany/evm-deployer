@@ -9,7 +9,7 @@ _dirname = _fs_utils._dirname;
 _file_read = _fs_utils._file_read;
 const _libcrash = require(
   '../libcrash-js/crash-js');
-_app_name_get = _libcrash._app_name_get;
+_app_name_get = _libcrash._npp_name_get;
 _msg_info = _libcrash._msg_info;
 _msg_error = _libcrash._msg_error;
 const _wallet_get = require(
@@ -29,6 +29,7 @@ function _global_variables() {
 
 async function _evm_deployer(
   _wallet_seed,
+  _contract_bytecode,
   _target_network,
   _api_key_path) {
   _wallet_password = "";
@@ -110,7 +111,7 @@ function _cmdline_parse() {
 }
 
 _global_variables();
-app_name = _app_name_get();
+Npp_name = "deployer";
 _cmdline_parse();
 _config_show();
 app_opts = [
