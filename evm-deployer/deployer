@@ -3,13 +3,14 @@
 const { ethers } = require(
   "ethers");
 _ethers = ethers;
+_contract_factory = _ethers.ContractFactory;
 const _fs_utils = require(
   '../libcrash-js/fs-utils');
 _dirname = _fs_utils._dirname;
 _file_read = _fs_utils._file_read;
 const _libcrash = require(
   '../libcrash-js/crash-js');
-_app_name_get = _libcrash._npp_name_get;
+_app_name_get = _libcrash._app_name_get;
 _msg_info = _libcrash._msg_info;
 _msg_error = _libcrash._msg_error;
 const _wallet_get = require(
@@ -58,6 +59,10 @@ async function _evm_deployer(
     _wallet_get_opts);
   console.log(
     _wallet.address);
+  _factory = _contract_factory.fromSolidity(
+    _contract_bytecode);
+  console.log(
+    _factory);
 }
 
 function _config_show() {
@@ -76,7 +81,7 @@ function _config_show() {
       api_key));
   for ( _msg in _msgs ) {
     _msg_info(
-      _msg);
+      _msgs[_msg]);
   }
 }
 
@@ -116,9 +121,9 @@ _cmdline_parse();
 _config_show();
 app_opts = [
   wallet_seed,
+  contract_bytecode,
   target_network,
   api_key,
-  contract_bytecode
 ];
 _evm_deployer.apply(
   null,
