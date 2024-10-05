@@ -30,7 +30,7 @@ function _global_variables() {
 
 async function _evm_deployer(
   _wallet_seed,
-  _contract_bytecode,
+  _contract_bytecode_path,
   _target_network,
   _api_key_path) {
   _wallet_password = "";
@@ -40,6 +40,8 @@ async function _evm_deployer(
     "wallet.dat"].join("/");
   _api_key = _file_read(
     _api_key_path);
+  _contract_bytecode = _file_read(
+    _contract_bytecode_path);
   _provider = _provider_get(
     _target_network,
     _api_key);
@@ -61,8 +63,9 @@ async function _evm_deployer(
     _wallet.address);
   _factory = _contract_factory.fromSolidity(
     _contract_bytecode);
+  _contract = await _factory.deploy();
   console.log(
-    _factory);
+    _contract);
 }
 
 function _config_show() {
