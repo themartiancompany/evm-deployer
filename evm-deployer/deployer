@@ -61,7 +61,7 @@ async function _evm_deployer(
 }
 
 function _config_show() {
-  var _msgs=[];
+  _msgs=[];
   _msgs.push(
     "      Wallet seed: {wallet_seed}".replace(
       "{wallet_seed}",
@@ -111,7 +111,7 @@ function _cmdline_parse() {
 }
 
 _global_variables();
-Npp_name = "deployer";
+app_name = "deployer";
 _cmdline_parse();
 _config_show();
 app_opts = [
@@ -121,4 +121,5 @@ app_opts = [
   contract_bytecode
 ];
 _evm_deployer.apply(
+  null,
   app_opts);
