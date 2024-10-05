@@ -113,10 +113,13 @@ _evm_deployer() {
     _api_key_path="${5}" \
     _contract_bytecode="${6}" \
     _target_contracts=() \
+    _contract_filename \
+    _contract_name \
     _cmd \
     _args=() \
     _api_key \
-    _network_backend
+    _network_backend \
+    _tmp
   shift \
     6
   _target_contracts+=(
@@ -132,14 +135,24 @@ _evm_deployer() {
     "${_wallet_seed}"
   )
   if [[ "${_contract_bytecode}" == "" ]]; then
-    solidity-compiler \
-      "${_target_contracts[@]}"
-  elif [[ "${_contract_bytecode}" != "" ]]; then
-    _args+=(
-      "${_contract_bytecode}"
+    _contract_filename="$( \
+      basename \
+        "${_target_contracts}")"
+    _contract_name="${_contract_filename%%.*}"
+    _bytecode_dir="$( \
+      mktemp \
+        -d)"
+    _solidity_compiler_opts+=(
+      -o
+        "${_bytecode_dir}"
     )
+    solidity-compiler \
+      "${_solidity_compiler_opts[@]}" \
+      "${_target_contracts[@]}"
+    _contract_bytecode="${_bytecode_dir}/contracts/${_contract_filename}/${_contract_name}.json"
   fi
   _args+=(
+    "${_contract_bytecode}"
     "${_network_backend}"
     "${_api_key_path}"
   )
