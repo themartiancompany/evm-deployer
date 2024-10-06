@@ -82,6 +82,10 @@ function _config_show() {
     "          API Key: {api_key}".replace(
       "{api_key}",
       api_key));
+  _msgs.push(
+    "Contract bytecode: {contract_bytecode}".replace(
+      "{contract_bytecode}",
+      contract_bytecode));
   for ( _msg in _msgs ) {
     _msg_info(
       _msgs[_msg]);
