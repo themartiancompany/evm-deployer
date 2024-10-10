@@ -62,7 +62,8 @@ async function _evm_deployer(
   console.log(
     _wallet.address);
   _factory = _contract_factory.fromSolidity(
-    _contract_bytecode);
+    _contract_bytecode,
+    runner=_wallet);
   _contract = await _factory.deploy();
   console.log(
     _contract);
