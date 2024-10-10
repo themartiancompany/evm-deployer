@@ -270,6 +270,22 @@ _secret_auto_detect() {
     "${_path}"
 }
 
+_contract_bytecode_autodetect() {
+  local \
+    _source \
+    _name
+  _source="$( \
+    _get \
+      "target" \
+      "contract")"
+  _name="${_source%.*}"
+  _target="${_name}.json"
+  if [ -e "${_target}" ]; then
+  echo \
+    "${_target}"
+  fi
+}
+
 _set_overrides() {
   _set_override \
     "deploy" \
