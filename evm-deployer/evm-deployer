@@ -343,19 +343,21 @@ Usage:
     publicPolygon
     quicknode
   options:
-     -w <wallet_path>     Wallet path.
-                          Default: $(_get "wallet" "path")
-     -p <wallet_password> Wallet password.
-                          Default: $(_get "wallet" "password")
-     -s <wallet_seed>     Wallet seed path.
-                          Default: $(_get "wallet" "seed")
-     -n <network>         EVM network name ('mainnet', 'gnosis').
-                          Default: $(_get "target" "network")
-     -k <api_key>         Etherscan-like service key.
-                          Default: $(_get "api" "key")
-     -h                   This message.
-     -c                   Enable color output
-     -v                   Enable verbose output
+     -w <wallet_path>         Wallet path.
+                              Default: $(_get "wallet" "path")
+     -p <wallet_password>     Wallet password.
+                              Default: $(_get "wallet" "password")
+     -s <wallet_seed>         Wallet seed path.
+                              Default: $(_get "wallet" "seed")
+     -n <network>             EVM network name ('mainnet', 'gnosis').
+                              Default: $(_get "target" "network")
+     -k <api_key>             Etherscan-like service key.
+                              Default: $(_get "api" "key")
+     -B <contract_bytecode>   Contract bytecode.
+                              Default: $(_get "contract" "bytecode")
+     -h                       This message.
+     -c                       Enable color output
+     -v                       Enable verbose output
 ENDUSAGETEXT
   _printf \
     '%s\n' \
