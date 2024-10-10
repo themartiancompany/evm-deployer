@@ -184,13 +184,16 @@ _secret_get() {
   local \
     _secret="${1}" \
     _path \
-    _name
+    _name \
+    _config \
+    _wallet
+  _config="${HOME}/.config"
   _name="$( \
     _get \
       "wallet" \
       "name")"
-  _path="$( \
-    _get_conf_dir_path)/${_name}-${_secret}.txt"
+  _wallet="${_config}/evm-wallet"
+  _path="${_wallet}/${_name}-${_secret}.txt"
   echo \
     "${_path}"
 }
