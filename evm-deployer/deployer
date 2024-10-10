@@ -13,8 +13,9 @@ const _libcrash = require(
 _app_name_get = _libcrash._app_name_get;
 _msg_info = _libcrash._msg_info;
 _msg_error = _libcrash._msg_error;
-const _wallet_get = require(
+const _evm_wallet_get = require(
   '../evm-wallet/wallet-get');
+_wallet_get = _evm_wallet_get._wallet_get;
 const _network_provider = require(
   '../evm-wallet/network-provider');
 _provider_get = _network_provider._provider_get;
@@ -56,14 +57,19 @@ async function _evm_deployer(
     _wallet_seed,
     _provider
   ];
-  _wallet = _wallet_get._wallet_get.apply(
+  _wallet = _wallet_get.apply(
     null,
     _wallet_get_opts);
+  _signer = _wallet.connect(
+    _provider);
   console.log(
-    _wallet.address);
+    "signer is {_signer}".replace(
+      "{_signer}",
+      _signer.address));
   _factory = _contract_factory.fromSolidity(
-    _contract_bytecode,
-    runner=_wallet);
+    _contract_bytecode);
+  _factory = _factory.connect(
+    _signer);
   _contract = await _factory.deploy();
   console.log(
     _contract);
