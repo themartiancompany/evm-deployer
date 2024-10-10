@@ -71,8 +71,12 @@ async function _evm_deployer(
   _factory = _factory.connect(
     _signer);
   _contract = await _factory.deploy();
+  _msg_info(
+    "{_contract}".replace(
+    "{_contract}",
+    _contract));
   console.log(
-    _contract);
+    _contract.target);
 }
 
 function _config_show() {
