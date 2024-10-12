@@ -60,16 +60,10 @@ async function _evm_deployer(
   _wallet = _wallet_get.apply(
     null,
     _wallet_get_opts);
-  _signer = _wallet.connect(
-    _provider);
-  console.log(
-    "signer is {_signer}".replace(
-      "{_signer}",
-      _signer.address));
   _factory = _contract_factory.fromSolidity(
     _contract_bytecode);
   _factory = _factory.connect(
-    _signer);
+    _wallet);
   _contract = await _factory.deploy();
   _msg_info(
     "{_contract}".replace(
