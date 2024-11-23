@@ -152,6 +152,7 @@ _evm_deployer() {
     _contract_bytecode="${_bytecode_dir}/contracts/${_contract_filename}/${_contract_name}.json"
   fi
   _args+=(
+    "${quiet}"
     "${_contract_bytecode}"
     "${_network_backend}"
     "${_api_key_path}"
