@@ -131,9 +131,6 @@ _evm_deployer() {
     _api_key_read \
       "${_api_key_path}")"
   _network_setup
-  _args+=(
-    "${_wallet_seed}"
-  )
   if [[ "${_contract_bytecode}" == "" ]]; then
     _contract_filename="$( \
       basename \
@@ -149,19 +146,21 @@ _evm_deployer() {
     solidity-compiler \
       "${_solidity_compiler_opts[@]}" \
       "${_target_contracts[@]}"
-    _contract_bytecode="${_bytecode_dir}/contracts/${_contract_filename}/${_contract_name}.json"
+    _contract_abi="${_bytecode_dir}/${_contract_name}.abi.json"
+    _contract_bytecode="${_bytecode_dir}/${_contract_name}.bin"
+    _contract_compiler_output="${_bytecode_dir}/contracts/${_contract_name}.sol/${_contract_name}.json"
   fi
   _args+=(
     "${quiet}"
+    "${_wallet_seed}"
+    "${_contract_abi}"
     "${_contract_bytecode}"
+    "${_contract_compiler_output}"
     "${_network_backend}"
     "${_api_key_path}"
   )
-  if [[ "${quiet}" != "y" ]]; then
-    _args+=(
-      -v
-    )
-  fi
+  _msg_info \
+    "running node with options '${_args[*]}'"
   _node_run \
     "${_cmd}" \
     "${_args[@]}"
@@ -208,6 +207,8 @@ _api_key_get() {
     _service="etherscan"
   elif [[ "${_network}" == "gnosis" ]]; then
     _service="gnosisscan"
+  else
+    _service=""
   fi
   _conf_dir="${HOME}/.config/${_service}"
   mkdir \
@@ -280,7 +281,7 @@ _contract_bytecode_autodetect() {
       "target" \
       "contract")"
   _name="${_source%.*}"
-  _target="${_name}.json"
+  _target="${_name}.bin"
   if [ -e "${_target}" ]; then
   echo \
     "${_target}"
@@ -288,6 +289,16 @@ _contract_bytecode_autodetect() {
 }
 
 _set_overrides() {
+  if [[ -v override_quiet ]]; then
+    quiet="${override_quiet}"
+  elif [[ -z "${quiet}" ]]; then
+    quiet="y"
+  fi
+  if [[ -v override_color ]]; then
+    color="${override_color}"
+  elif [[ -z "${color}" ]]; then
+    color="n"
+  fi
   _set_override \
     "deploy" \
     "date" \
@@ -322,16 +333,6 @@ _set_overrides() {
     "contract" \
     "bytecode" \
     ""
-  if [[ -v override_quiet ]]; then
-    quiet="${override_quiet}"
-  elif [[ -z "${quiet}" ]]; then
-    quiet="y"
-  fi
-  if [[ -v override_color ]]; then
-    color="${override_color}"
-  elif [[ -z "${color}" ]]; then
-    color="n"
-  fi
 }
 
 # Show help usage, with an exit status.

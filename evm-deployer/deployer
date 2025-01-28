@@ -22,6 +22,8 @@ const
   _libcrash =
     require(
       '../libcrash-js/crash-js');
+_json_read =
+  _libcrash._json_read;
 _msg_info =
   _libcrash._msg_info;
 _msg_error =
@@ -45,7 +47,11 @@ function
     "deployer";
   wallet_seed =
     "";
+  contract_abi_path =
+    "";
   contract_bytecode_path =
+    "";
+  contract_compiler_output_path =
     "";
   target_network =
     "";
@@ -93,12 +99,15 @@ function
 async function
   _evm_deployer(
     _wallet_seed,
+    _contract_abi_path,
     _contract_bytecode_path,
+    _contract_compiler_output_path,
     _target_network,
     _api_key_path) {
   let
     _api_key,
     _contract,
+    _contract_abi,
     _contract_bytecode,
     _factory,
     _wallet,
@@ -138,9 +147,16 @@ async function
     _wallet_get.apply(
       null,
       _wallet_get_opts);
-  _factory =
-    _contract_factory.fromSolidity(
+  _contract_abi =
+    _json_read(
+      _contract_abi_path);
+  _factory = new
+    _contract_factory(
+      _contract_abi,
       _contract_bytecode);
+  // _factory =
+  //   _contract_factory.fromSolidity(
+  //     _contract_bytecode);
   _factory =
     _factory.connect(
       _wallet);
@@ -191,10 +207,12 @@ function
     "  deployer",
     "    <quiet>",
     "    <seed_path>",
-    "    <contract_bytecode>",
+    "    <contract_abi_path>",
+    "    <contract_bytecode_path>",
+    "    <contract_compiler_output_path>",
     "    (<target_network>)",
     "    (<api_key>)"];
-  for ( _line in _text ) {
+  for ( _line of _text ) {
     _msg_info(
       _line);
   }
@@ -219,14 +237,22 @@ function _cmdline_parse() {
           _value;
       }
       if ( _index == 4 ) {
-        contract_bytecode_path =
+        contract_abi_path =
           _value;
       }
       if ( _index == 5 ) {
-        target_network =
+        contract_bytecode_path =
           _value;
       }
       if ( _index == 6 ) {
+        contract_compiler_output_path =
+          _value;
+      }
+      if ( _index == 7 ) {
+        target_network =
+          _value;
+      }
+      if ( _index == 8 ) {
         api_key_path =
           _value;
       }
@@ -243,7 +269,9 @@ if ( require.main == module ) {
   _config_show();
   app_opts = [
     wallet_seed,
+    contract_abi_path,
     contract_bytecode_path,
+    contract_compiler_output_path,
     target_network,
     api_key_path,
   ];
