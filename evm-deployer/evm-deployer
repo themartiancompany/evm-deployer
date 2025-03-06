@@ -43,7 +43,7 @@ _global_variables() {
 
 _requirements() {
   _check_cmd \
-    'evm-chain-info'
+    'evm-chains-info'
   _check_cmd \
     'evm-wallet'
   _check_cmd \
@@ -91,8 +91,8 @@ _node_network_setup() {
     _rpc \
     _msg=()
   _msg=(
-    "looking for info on EVM blockchain"
-    "'${_chain}'"
+    "Looking for info on EVM blockchain"
+    "'${_chain}'."
   )
   _msg_info \
     "${_msg[*]}"
@@ -112,7 +112,7 @@ _node_network_setup() {
       "Found blockchain '${_chain_name}'"
       "with id '${_chain_id}'"
       "Selecting RPC address with"
-      "criterion 'kirsh'"
+      "criterion 'kirsh'."
     )
     _msg_info \
       "${_msg[*]}"
@@ -133,6 +133,15 @@ _node_network_setup() {
     _msg_info \
       "${_msg[*]}"
     _rpc="${_chain}"
+  fi
+  _msg=(
+    "Selected RPC address"
+    "'${_rpc}'."
+  )
+  _msg_info \
+    "${_msg[*]}"
+  _network_backend="${_rpc}"
+}
 
 _evm_deployer() {
   local \
@@ -161,8 +170,10 @@ _evm_deployer() {
   )
   _cmd="$( \
     _get_lib)/${app_name}/deployer"
-  _node_network_setup
-  if [[ "${_contract_bytecode}" == "" ]]; then
+  _node_network_setup \
+    "${_network}"
+  if [[ "${_contract_bytecode_path}" == "" && \
+        "${_contract_compiler_output_path}" == "" ]]; then
     _contract_filename="$( \
       basename \
         "${_target_contracts}")"
@@ -202,9 +213,9 @@ _evm_deployer() {
   _args+=(
     "${quiet}"
     "${_wallet_seed}"
-    "${_contract_abi}"
-    "${_contract_bytecode}"
-    "${_contract_compiler_output}"
+    "${_contract_abi_path}"
+    "${_contract_bytecode_path}"
+    "${_contract_compiler_output_path}"
     "${_network_backend}"
     "${_api_key_path}"
   )
@@ -295,6 +306,14 @@ _set_overrides() {
     "version" \
     ""
   if [[ "${target_contracts[*]}" != "" ]]; then
+    _set_override \
+      "contract" \
+      "abi" \
+      ""
+    _set_override \
+      "contract" \
+      "compiler_output" \
+      ""
     _contract_bytecode_auto_detect
   fi
 }

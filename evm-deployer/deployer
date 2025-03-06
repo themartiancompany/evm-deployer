@@ -193,22 +193,30 @@ function
   _text =
     [];
   _text.push(
-    "      Wallet seed: {wallet_seed}".replace(
+    "             Wallet seed: {wallet_seed}".replace(
       "{wallet_seed}",
       wallet_seed));
   _text.push(
-    "   Target network: {target_network}".replace(
+    "          Target network: {target_network}".replace(
       "{target_network}",
       target_network));
   _text.push(
-    "          API Key: {api_key}".replace(
+    "                 API Key: {api_key}".replace(
       "{api_key}",
       api_key_path));
   _text.push(
-    "Contract bytecode: {contract_bytecode}".replace(
-      "{contract_bytecode}",
+    "            Contract ABI: {contract_abi_path}".replace(
+      "{contract_abi_path}",
+      contract_abi_path));
+  _text.push(
+    "       Contract bytecode: {contract_bytecode_path}".replace(
+      "{contract_bytecode_path}",
       contract_bytecode_path));
-  for ( _line in _text ) {
+  _text.push(
+    "Contract compiler output: {contract_compiler_output_path}".replace(
+      "{contract_compiler_output_path}",
+      contract_compiler_output_path));
+  for ( _line of _text ) {
     _msg_info(
       _line);
   }
