@@ -169,7 +169,7 @@ async function
   else if ( _contract_compiler_output_path != "" ) {
     _contract_compiler_output =
       _json_read(
-        _contract_abi_path);
+        _contract_compiler_output_path);
     _factory =
       _contract_factory.fromSolidity(
         _contract_compiler_output);
