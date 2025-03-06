@@ -31,10 +31,10 @@ _global_variables() {
   target_network=""
   contract_abi=""
   contract_bytecode=""
+  contract_compiler_output=""
   compiler_backend=""
   evm_version=""
   solc_version=""
-  contract_compiler_output=""
   api_key=""
   wallet_name=""
   color=""
@@ -328,28 +328,32 @@ Usage:
     see which with "evm-chains-info"
 
   options:
-     -w <wallet_path>         Wallet path.
-                              Default: ${wallet_path}
-     -p <wallet_password>     Wallet password.
-                              Default: ${wallet_password}
-     -s <wallet_seed>         Wallet seed path.
-                              Default: ${wallet_seed}
-     -n <network>             EVM network name.
-                              Default: ${target_network}
-     -k <api_key>             Etherscan-like service key.
-                              Default: ${api_key}
-     -B <contract_bytecode>   Contract bytecode.
-                              Default: ${contract_bytecode}
-     -b <compiler_backend>    It can be 'solc' or 'hardhat'.
-                              Default: ${compiler_backend}
-     -C <solc_version>        Solc version.
-                              Default: ${solc_version}
-     -e <evm_version>         EVM version.
-                              Default: ${evm_version}
+     -w <wallet_path>                Wallet path.
+                                     Default: ${wallet_path}
+     -p <wallet_password>            Wallet password.
+                                     Default: ${wallet_password}
+     -s <wallet_seed>                Wallet seed path.
+                                     Default: ${wallet_seed}
+     -n <network>                    EVM network name.
+                                     Default: ${target_network}
+     -k <api_key>                    Etherscan-like service key.
+                                     Default: ${api_key}
+     -A <contract_abi>               Contract ABI.
+                                     Default: ${contract_abi}
+     -B <contract_bytecode>          Contract bytecode.
+                                     Default: ${contract_bytecode}
+     -O <contract_compiler_output>   Contract compiler output.
+                                     Default: ${contract_compiler_output}
+     -b <compiler_backend>           It can be 'solc' or 'hardhat'.
+                                     Default: ${compiler_backend}
+     -C <solc_version>               Solc version.
+                                     Default: ${solc_version}
+     -e <evm_version>                EVM version.
+                                     Default: ${evm_version}
 
-     -h                       This message.
-     -c                       Enable color output
-     -v                       Enable verbose output
+     -h                              This message.
+     -c                              Enable color output
+     -v                              Enable verbose output
 ENDUSAGETEXT
   _printf \
     '%s\n' \
@@ -380,7 +384,9 @@ _show_config() {
   _msg_info "              Wallet seed:   ${wallet_seed}"
   _msg_info "           Target network:   ${target_network}"
   _msg_info "                  API key:   ${api_key}"
+  _msg_info "             Contract ABI:   ${contract_abi}"
   _msg_info "        Contract bytecode:   ${contract_bytecode}"
+  _msg_info " Contract compiler output:   ${contract_compiler_output}"
   _msg_info "             Solc version:   ${solc_version}"
   _msg_info "              EVM version:   ${evm_version}"
   _msg_info "         Compiler backend:   ${compiler_backend}"
@@ -395,7 +401,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:k:b:C:e:a:B:o:cvh?' \
+    'w:p:s:n:k:b:C:e:A:B:O:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -407,9 +413,9 @@ while \
     b) override_compiler_backend="${OPTARG}" ;;
     C) override_solc_version="${OPTARG}" ;;
     e) override_evm_version="${OPTARG}" ;;
-    a) override_contract_abi="${OPTARG}" ;;
+    A) override_contract_abi="${OPTARG}" ;;
     B) override_contract_bytecode="${OPTARG}" ;;
-    o) override_contract_compiler_output="${OPTARG}" ;;
+    O) override_contract_compiler_output="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
     h|?) _set_overrides && \
