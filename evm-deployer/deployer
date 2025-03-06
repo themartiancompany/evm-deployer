@@ -9,25 +9,23 @@ _ethers =
 _contract_factory =
   _ethers.ContractFactory;
 const
-  _fs_utils =
-    require(
-      '../libcrash-js/fs-utils');
-_dirname =
-  _fs_utils._dirname;
-_file_read =
-  _fs_utils._file_read;
-_path_join =
-  _fs_utils._path_join;
-const
   _libcrash =
     require(
       '../libcrash-js/crash-js');
+_cmdline_check =
+  _libcrash._cmdline_check;
+_dirname =
+  _libcrash._dirname;
+_file_read =
+  _libcrash._file_read;
 _json_read =
   _libcrash._json_read;
 _msg_info =
   _libcrash._msg_info;
 _msg_error =
   _libcrash._msg_error;
+_path_join =
+  _libcrash._path_join;
 const
   _wallet_get_module =
     require(
@@ -198,7 +196,8 @@ function
 }
 
 function
-  _usage() {
+  _usage(
+    _exit) {
   let
     _line,
     _text;
@@ -216,7 +215,8 @@ function
     _msg_info(
       _line);
   }
-  process.exit();
+  process.exit(
+    _exit);
 }
 
 
@@ -256,16 +256,39 @@ function _cmdline_parse() {
         api_key_path =
           _value;
       }
+      if ( _value == "-h" ||
+           _value == "--help" ) {
+        quiet =
+          "n";
+        _usage(
+          0);
+      }
   });
-  if ( contract_bytecode_path == "" ) {
-    _usage();
+  if ( contract_bytecode_path == "" &&
+       contract_compiler_output_path == "" ) {
+    quiet =
+      "n";
+    _usage(
+      1);
   }
 }
 
-_global_variables();
+function 
+  _overrides_set() {
+  if ( target_network == "" ) {
+    _msg_info(
+      "No network selected, setting gnosis");
+    target_network =
+      "https://rpc.gnosischain.com";
+  }
+}
 
-if ( require.main == module ) {
+
+if ( _cmdline_check(
+       "deployer") == true ) {
+  _global_variables();
   _cmdline_parse();
+  _overrides_set();
   _config_show();
   app_opts = [
     wallet_seed,

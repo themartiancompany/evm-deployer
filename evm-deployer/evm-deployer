@@ -8,9 +8,17 @@ _bin="$( \
       command \
         -v \
 	  "env")")"
-_lib="${_bin}/../lib"
-source \
-  "${_lib}/libcrash-bash/crash-bash"
+_lib="$( \
+  realpath \
+    "${_bin}/../lib")"
+_crash_bash="${_lib}/libcrash-bash/crash-bash"
+_libevm="${_lib}/libevm/libevm"
+_sourced \
+  "${_crash_bash}" 2>/dev/null || \
+  source \
+    "${_crash_bash}"
+_sourced \
+  "${_libevm}"
 
 # shellcheck disable=SC2034
 _global_variables() {
@@ -20,7 +28,9 @@ _global_variables() {
   wallet_password=""
   wallet_seed=""
   target_network=""
+  contract_abi=""
   contract_bytecode=""
+  contract_compiler_output=""
   api_key=""
   wallet_name=""
   color=""
@@ -307,6 +317,9 @@ _set_overrides() {
     "wallet" \
     "name" \
     "default"
+  _api_key_auto_detect \
+    "${target_network}"
+
   _set_override \
     "target" \
     "network" \
