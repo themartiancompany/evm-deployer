@@ -43,12 +43,12 @@ _global_variables() {
 
 _requirements() {
   _check_cmd \
+    'evm-chain-info'
+  _check_cmd \
     'evm-wallet'
   _check_cmd \
     'node' \
     'nodejs'
-  _check_cmd \
-    "jq"
   _check_cmd \
     'solidity-compiler'
 }
@@ -59,16 +59,6 @@ _get_conf_dir_path() {
   _dir="${HOME}/.config/${app_name}"
   echo \
     "${_dir}"
-}
-
-_wallet_address_cmd() {
-  local \
-    _command="${1}" \
-    _lib
-  _lib="$( \
-    _get_lib)/evm-wallet"
-  echo \
-    "${_lib}/address-${_command}"
 }
 
 _node_run() {
@@ -90,32 +80,59 @@ _node_run() {
   NODE_PATH="${_node_path}" \
   node \
     "${_cmd}" \
-      "${_args[@]}" || \
-    true
+      "${_args[@]}"
 }
 
-_network_setup() {
-  if [[ "${_network}" == "gnosis" ]]; then
-    _rpc="https://rpc.gnosischain.com"
-    _network_backend="${_network}"
-  elif [[ "${_network}" == "ethereum" ]]; then
-    _network_backend="etherscan"
-  else
-    _network_backend="${_network}"
-  fi
-}
-
-_api_key_read() {
+_node_network_setup() {
   local \
-    _path="${1}"
-  if [ ! -e "${_path}" ]; then
-    _msg_error \
-      "service api key file '${_path}' not found" \
-      1
-  fi
-  cat \
-    "${_path}"
-}
+    _chain="${1}" \
+    _chain_name \
+    _chain_id \
+    _rpc \
+    _msg=()
+  _msg=(
+    "looking for info on EVM blockchain"
+    "'${_chain}'"
+  )
+  _msg_info \
+    "${_msg[*]}"
+  _chain_id="$( \
+    evm-chains-info \
+      -o \
+        "id" \
+      "${_chain}")"
+  if [[ "${_chain_id}" != "" ]]; then
+    _chain_name="$( \
+      evm-chains-info \
+        -o \
+          "name" \
+        "${_chain}" 2>/dev/null || \
+        true)"
+    _msg=(
+      "Found blockchain '${_chain_name}'"
+      "with id '${_chain_id}'"
+      "Selecting RPC address with"
+      "criterion 'kirsh'"
+    )
+    _msg_info \
+      "${_msg[*]}"
+    _rpc="$( \
+      evm-chains-info \
+        -o \
+          "rpc" \
+        -s \
+          "kirsh" \
+        "${_chain}")"
+  elif [[ "${_chain_id}" == "" ]]; then
+    _msg=(
+      "Found no known blockchain for input"
+      "'${_chain}', interpreting given input"
+      "as an rpc address for the selected"
+      "network."
+    )
+    _msg_info \
+      "${_msg[*]}"
+    _rpc="${_chain}"
 
 _evm_deployer() {
   local \
@@ -124,26 +141,27 @@ _evm_deployer() {
     _wallet_seed="${3}" \
     _network="${4}" \
     _api_key_path="${5}" \
-    _contract_bytecode="${6}" \
-    _compiler_backend="${7}" \
-    _solc_version="${8}" \
-    _evm_version="${9}" \
+    _contract_abi_path="${6}" \
+    _contract_bytecode_path="${7}" \
+    _contract_compiler_output_path="${8}" \
+    _compiler_backend="${9}" \
+    _solc_version="${10}" \
+    _evm_version="${11}" \
     _target_contracts=() \
     _contract_filename \
     _contract_name \
     _cmd \
     _args=() \
-    _api_key \
     _network_backend \
     _tmp
   shift \
-    9
+    11
   _target_contracts+=(
     "$@"
   )
   _cmd="$( \
     _get_lib)/${app_name}/deployer"
-  _network_setup
+  _node_network_setup
   if [[ "${_contract_bytecode}" == "" ]]; then
     _contract_filename="$( \
       basename \
@@ -377,7 +395,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:k:b:C:e:B:cvh?' \
+    'w:p:s:n:k:b:C:e:a:B:o:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -389,7 +407,9 @@ while \
     b) override_compiler_backend="${OPTARG}" ;;
     C) override_solc_version="${OPTARG}" ;;
     e) override_evm_version="${OPTARG}" ;;
+    a) override_contract_abi="${OPTARG}" ;;
     B) override_contract_bytecode="${OPTARG}" ;;
+    o) override_contract_compiler_output="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
     h|?) _set_overrides && \
@@ -424,7 +444,9 @@ app_opts=(
   "${wallet_seed}"
   "${target_network}"
   "${api_key}"
+  "${contract_abi}"
   "${contract_bytecode}"
+  "${contract_compiler_output}"
   "${compiler_backend}"
   "${solc_version}"
   "${evm_version}"

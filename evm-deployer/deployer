@@ -107,6 +107,7 @@ async function
     _contract,
     _contract_abi,
     _contract_bytecode,
+    _contract_compiler_output,
     _factory,
     _wallet,
     _wallet_get_opts,
@@ -123,12 +124,15 @@ async function
   _wallet_path =
     _path_join(
       _wallet_path_list);
-  _api_key =
-    _file_read(
-      _api_key_path);
-  _contract_bytecode =
-    _file_read(
-      _contract_bytecode_path);
+  if ( _api_key_path != "" ) {
+    _api_key =
+      _file_read(
+        _api_key_path);
+  }
+  else if ( _api_key_path == "" ) {
+    _api_key =
+      "";
+  }
   _provider =
     _provider_get(
       _target_network,
@@ -145,16 +149,31 @@ async function
     _wallet_get.apply(
       null,
       _wallet_get_opts);
-  _contract_abi =
-    _json_read(
-      _contract_abi_path);
-  _factory = new
-    _contract_factory(
-      _contract_abi,
-      _contract_bytecode);
-  // _factory =
-  //   _contract_factory.fromSolidity(
-  //     _contract_bytecode);
+  if ( _contract_bytecode_path != "" ) {
+    if ( _contract_abi_path == "" ) {
+      _msg_error(
+        "Contract ABI is needed if deploying with bytecode.",
+        1);
+    }
+    _contract_bytecode =
+      _file_read(
+        _contract_bytecode_path);
+    _contract_abi =
+      _json_read(
+        _contract_abi_path);
+    _factory = new
+      _contract_factory(
+        _contract_abi,
+        _contract_bytecode);
+  }
+  else if ( _contract_compiler_output_path != "" ) {
+    _contract_compiler_output =
+      _json_read(
+        _contract_abi_path);
+    _factory =
+      _contract_factory.fromSolidity(
+        _contract_compiler_output);
+  }
   _factory =
     _factory.connect(
       _wallet);
