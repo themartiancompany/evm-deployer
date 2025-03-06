@@ -27,9 +27,13 @@ _global_variables() {
   wallet_path=""
   wallet_password=""
   wallet_seed=""
+  wallet_address=""
   target_network=""
   contract_abi=""
   contract_bytecode=""
+  compiler_backend=""
+  evm_version=""
+  solc_version=""
   contract_compiler_output=""
   api_key=""
   wallet_name=""
@@ -44,16 +48,15 @@ _requirements() {
     'node' \
     'nodejs'
   _check_cmd \
+    "jq"
+  _check_cmd \
     'solidity-compiler'
 }
 
 _get_conf_dir_path() {
   local \
     _dir
-  _dir="${HOME}/.config/$( \
-    _get \
-      "app" \
-      "name")"
+  _dir="${HOME}/.config/${app_name}"
   echo \
     "${_dir}"
 }
@@ -122,6 +125,9 @@ _evm_deployer() {
     _network="${4}" \
     _api_key_path="${5}" \
     _contract_bytecode="${6}" \
+    _compiler_backend="${7}" \
+    _solc_version="${8}" \
+    _evm_version="${9}" \
     _target_contracts=() \
     _contract_filename \
     _contract_name \
@@ -131,15 +137,12 @@ _evm_deployer() {
     _network_backend \
     _tmp
   shift \
-    6
+    9
   _target_contracts+=(
     "$@"
   )
   _cmd="$( \
     _get_lib)/${app_name}/deployer"
-  _api_key="$( \
-    _api_key_read \
-      "${_api_key_path}")"
   _network_setup
   if [[ "${_contract_bytecode}" == "" ]]; then
     _contract_filename="$( \
@@ -153,6 +156,24 @@ _evm_deployer() {
       -o
         "${_bytecode_dir}"
     )
+    if [[ "${_compiler_backend}" != "" ]]; then
+      _solidity_compiler_opts+=(
+        -b
+          "${_compiler_backend}"
+      )
+    fi
+    if [[ "${_solc_version}" != "" ]]; then
+      _solidity_compiler_opts+=(
+        -C
+          "${_solc_version}"
+      )
+    fi
+    if [[ "${_evm_version}" != "" ]]; then
+      _solidity_compiler_opts+=(
+        -e
+          "${_evm_version}"
+      )
+    fi
     solidity-compiler \
       "${_solidity_compiler_opts[@]}" \
       "${_target_contracts[@]}"
@@ -170,132 +191,29 @@ _evm_deployer() {
     "${_api_key_path}"
   )
   _msg_info \
-    "running node with options '${_args[*]}'"
+    "Running node with options '${_args[*]}'."
   _node_run \
     "${_cmd}" \
     "${_args[@]}"
 }
 
-_wallet_path_get() {
+_contract_bytecode_auto_detect() {
   local \
-    _path \
-    _name
-  _name="$( \
-    _get \
-      "wallet" \
-      "name")"
-  _path="${HOME}/.config/evm-wallet/${_name}.dat"
-  echo \
-    "${_path}"
-}
-
-_secret_get() {
-  local \
-    _secret="${1}" \
-    _path \
+    _bytecode \
     _name \
-    _config \
-    _wallet
-  _config="${HOME}/.config"
-  _name="$( \
-    _get \
-      "wallet" \
-      "name")"
-  _wallet="${_config}/evm-wallet"
-  _path="${_wallet}/${_name}-${_secret}.txt"
-  echo \
-    "${_path}"
-}
-
-_api_key_get() {
-  local \
-    _name="${1}" \
-    _network="${2}" \
-    _conf_dir \
-    _service
-  if [[ "${_network}" == "ethereum" ]]; then
-    _service="etherscan"
-  elif [[ "${_network}" == "gnosis" ]]; then
-    _service="gnosisscan"
-  else
-    _service=""
-  fi
-  _conf_dir="${HOME}/.config/${_service}"
-  mkdir \
-    -p \
-    "${_conf_dir}"
-  echo \
-    "${_conf_dir}/${_name}.txt"
-}
-
-_secret_auto_detect() {
-  local \
-    _secret="${1}" \
-    _secret_type="${2}" \
-    _dir \
-    _key_gen_opts=() \
-    _msg=()
-  _path="$( \
-    _secret_get \
-      "${_secret}")"
-  _dir="$( \
-    dirname \
-      "${_path}")"
-  if [[ ! -e "${_path}" ]]; then
-    _key_gen_opts+=(
-      -t
-        "${_secret_type}"
-    )
-    _msg=(
-      "generating ${_secret} '${_path}'"
-    )
-    if [[ "${quiet}" == "n" ]]; then
-      _msg_info \
-        "${_msg[*]}"
-    fi
-    mkdir \
-      -p \
-      "${_dir}"
-    chmod \
-      700 \
-      "${_dir}"
-    chmod \
-      700 \
-      "${_dir}"
-    key-gen \
-      "${_key_gen_opts[@]}" \
-      "${_path}"
-    chmod \
-      400 \
-      "${_path}"
-    _msg=(
-      "${_secret} '${_path}' successfully generated"
-    )
-    if [[ "${quiet}" == "n" ]]; then
-      _msg_info \
-        "${_msg[*]}"
-    fi
-  fi
-  _set_override \
-    "wallet" \
-    "${_secret}" \
-    "${_path}"
-}
-
-_contract_bytecode_autodetect() {
-  local \
     _source \
-    _name
-  _source="$( \
-    _get \
-      "target" \
-      "contract")"
+    _target
+  _bytecode=""
+  _source="${target_contracts}"
   _name="${_source%.*}"
   _target="${_name}.bin"
   if [ -e "${_target}" ]; then
-  echo \
-    "${_target}"
+    _bytecode="${_target}"
   fi
+  _set_override \
+    "contract" \
+    "bytecode" \
+    "${_bytecode}"
 }
 
 _set_overrides() {
@@ -317,42 +235,62 @@ _set_overrides() {
     "wallet" \
     "name" \
     "default"
-  _api_key_auto_detect \
-    "${target_network}"
-
   _set_override \
     "target" \
     "network" \
-    "gnosis"
-  _set_override \
-    "api" \
-    "key" \
-    "$(_api_key_get \
-         "default" \
-         "$(_get \
-              "target" \
-              "network")")"
+    "Gnosis"
+  _api_key_auto_detect \
+    "${target_network}"
   _set_override \
     "wallet" \
     "path" \
-    "$(_wallet_path_get)"
+    "$(_wallet_path_get \
+         "evm-wallet" \
+         "${wallet_name}")"
   _secret_auto_detect \
     "seed" \
-    "seed"
+    "seed" \
+    "evm-wallet" \
+    "${wallet_name}"
   _secret_auto_detect \
     "password" \
-    "plain"
+    "plain" \
+    "evm-wallet" \
+    "${wallet_name}"
   _set_override \
-    "contract" \
-    "bytecode" \
+    "wallet" \
+    "address" \
+    "$(evm-wallet \
+         get \
+           "${wallet_name}" \
+           "address")"
+  _set_override \
+    "compiler" \
+    "backend" \
     ""
+  _set_override \
+    "solc" \
+    "version" \
+    ""
+  _set_override \
+    "evm" \
+    "version" \
+    ""
+  if [[ "${target_contracts[*]}" != "" ]]; then
+    _contract_bytecode_auto_detect
+  fi
 }
 
 # Show help usage, with an exit status.
 # $1: exit status number.
 _usage() {
   local \
+    _networks_amount \
     _usage_text
+  _networks_amount="$( \
+    evm-chains-info \
+      -i \
+        "amount")"
   IFS='' \
     read \
       -r \
@@ -362,32 +300,35 @@ _usage() {
 EVM network deployer
 
 Usage:
-  $(_get "app" "name")
+  ${app_name}
     [options]
     <contract_file>
+
   networks:
-    alchemy
-    ankr
-    cloudflare
-    chainstack
-    etherscan
-    gnosis
-    infura
-    publicPolygon
-    quicknode
+    total EVM networks available:
+      ${_networks_amount}
+    see which with "evm-chains-info"
+
   options:
      -w <wallet_path>         Wallet path.
-                              Default: $(_get "wallet" "path")
+                              Default: ${wallet_path}
      -p <wallet_password>     Wallet password.
-                              Default: $(_get "wallet" "password")
+                              Default: ${wallet_password}
      -s <wallet_seed>         Wallet seed path.
-                              Default: $(_get "wallet" "seed")
-     -n <network>             EVM network name ('mainnet', 'gnosis').
-                              Default: $(_get "target" "network")
+                              Default: ${wallet_seed}
+     -n <network>             EVM network name.
+                              Default: ${target_network}
      -k <api_key>             Etherscan-like service key.
-                              Default: $(_get "api" "key")
+                              Default: ${api_key}
      -B <contract_bytecode>   Contract bytecode.
-                              Default: $(_get "contract" "bytecode")
+                              Default: ${contract_bytecode}
+     -b <compiler_backend>    It can be 'solc' or 'hardhat'.
+                              Default: ${compiler_backend}
+     -C <solc_version>        Solc version.
+                              Default: ${solc_version}
+     -e <evm_version>         EVM version.
+                              Default: ${evm_version}
+
      -h                       This message.
      -c                       Enable color output
      -v                       Enable verbose output
@@ -415,13 +356,16 @@ _display_flags() {
 # Shows configuration options.
 _show_config() {
   _msg_info "${app_name} configuration"
-  _msg_info "              Deploy date:   $(_get "deploy" "date")"
-  _msg_info "              Wallet path:   $(_get "wallet" "path")"
-  _msg_info "          Wallet password:   $(_get "wallet" "password")"
-  _msg_info "              Wallet seed:   $(_get "wallet" "seed")"
-  _msg_info "           Target network:   $(_get "target" "network")"
-  _msg_info "                  API key:   $(_get "api" "key")"
-  _msg_info "        Contract bytecode:   $(_get "contract" "bytecode")"
+  _msg_info "              Deploy date:   ${deploy_date}"
+  _msg_info "              Wallet path:   ${wallet_path}"
+  _msg_info "          Wallet password:   ${wallet_password}"
+  _msg_info "              Wallet seed:   ${wallet_seed}"
+  _msg_info "           Target network:   ${target_network}"
+  _msg_info "                  API key:   ${api_key}"
+  _msg_info "        Contract bytecode:   ${contract_bytecode}"
+  _msg_info "             Solc version:   ${solc_version}"
+  _msg_info "              EVM version:   ${evm_version}"
+  _msg_info "         Compiler backend:   ${compiler_backend}"
   _msg_info "         Target contracts:   ${target_contracts[*]}"
 }
 
@@ -429,13 +373,11 @@ _globals
 _global_variables
 _requirements
 _config_user_init \
-  "$(_get \
-       "app" \
-       "name")"
+  "${app_name}"
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:k:B:cvh?' \
+    'w:p:s:n:k:b:C:e:B:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -444,6 +386,9 @@ while \
     s) override_wallet_seed="${OPTARG}" ;;
     n) override_target_network="${OPTARG}" ;;
     k) override_api_key="${OPTARG}" ;;
+    b) override_compiler_backend="${OPTARG}" ;;
+    C) override_solc_version="${OPTARG}" ;;
+    e) override_evm_version="${OPTARG}" ;;
     B) override_contract_bytecode="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
@@ -472,37 +417,17 @@ target_contracts+=(
   "$@"
 )
 _set_overrides
-_config_user_init \
-  "$( \
-    _get \
-      "app" \
-      "name")"
 _show_config
 app_opts=(
-  "$( \
-    _get \
-      "wallet" \
-      "path")"
-  "$( \
-    _get \
-      "wallet" \
-      "password")"
-  "$( \
-    _get \
-      "wallet" \
-      "seed")"
-  "$( \
-    _get \
-      "target" \
-      "network")"
-  "$( \
-    _get \
-      "api" \
-      "key")"
-  "$( \
-    _get \
-      "contract" \
-      "bytecode")"
+  "${wallet_path}"
+  "${wallet_password}"
+  "${wallet_seed}"
+  "${target_network}"
+  "${api_key}"
+  "${contract_bytecode}"
+  "${compiler_backend}"
+  "${solc_version}"
+  "${evm_version}"
   "${target_contracts[@]}"
 )
 _evm_deployer \
