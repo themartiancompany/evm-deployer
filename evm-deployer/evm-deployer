@@ -29,6 +29,7 @@ _global_variables() {
   wallet_seed=""
   wallet_address=""
   target_network=""
+  rpc_selection=""
   contract_abi=""
   contract_bytecode=""
   contract_compiler_output=""
@@ -83,95 +84,37 @@ _node_run() {
       "${_args[@]}"
 }
 
-_node_network_setup() {
-  local \
-    _chain="${1}" \
-    _chain_name \
-    _chain_id \
-    _rpc \
-    _msg=()
-  _msg=(
-    "Looking for info on EVM blockchain"
-    "'${_chain}'."
-  )
-  _msg_info \
-    "${_msg[*]}"
-  _chain_id="$( \
-    evm-chains-info \
-      -o \
-        "id" \
-      "${_chain}")"
-  if [[ "${_chain_id}" != "" ]]; then
-    _chain_name="$( \
-      evm-chains-info \
-        -o \
-          "name" \
-        "${_chain}" 2>/dev/null || \
-        true)"
-    _msg=(
-      "Found blockchain '${_chain_name}'"
-      "with id '${_chain_id}'"
-      "Selecting RPC address with"
-      "criterion 'kirsh'."
-    )
-    _msg_info \
-      "${_msg[*]}"
-    _rpc="$( \
-      evm-chains-info \
-        -o \
-          "rpc" \
-        -s \
-          "kirsh" \
-        "${_chain}")"
-  elif [[ "${_chain_id}" == "" ]]; then
-    _msg=(
-      "Found no known blockchain for input"
-      "'${_chain}', interpreting given input"
-      "as an rpc address for the selected"
-      "network."
-    )
-    _msg_info \
-      "${_msg[*]}"
-    _rpc="${_chain}"
-  fi
-  _msg=(
-    "Selected RPC address"
-    "'${_rpc}'."
-  )
-  _msg_info \
-    "${_msg[*]}"
-  _network_backend="${_rpc}"
-}
-
 _evm_deployer() {
   local \
     _wallet_path="${1}" \
     _wallet_password="${2}" \
     _wallet_seed="${3}" \
     _network="${4}" \
-    _api_key_path="${5}" \
-    _contract_abi_path="${6}" \
-    _contract_bytecode_path="${7}" \
-    _contract_compiler_output_path="${8}" \
-    _compiler_backend="${9}" \
-    _solc_version="${10}" \
-    _evm_version="${11}" \
+    _rpc_selection="${5}" \
+    _api_key_path="${6}" \
+    _contract_abi_path="${7}" \
+    _contract_bytecode_path="${8}" \
+    _contract_compiler_output_path="${9}" \
+    _compiler_backend="${10}" \
+    _solc_version="${11}" \
+    _evm_version="${12}" \
     _target_contracts=() \
     _contract_filename \
     _contract_name \
     _cmd \
     _args=() \
-    _network_backend \
+    _rpc_backend \
     _tmp
   shift \
-    11
+    12
   _target_contracts+=(
     "$@"
   )
   _cmd="$( \
     _get_lib)/${app_name}/deployer"
-  _node_network_setup \
-    "${_network}"
+  _rpc_backend_get \
+    "${_network}" \
+    "${_rpc_selection}"
   if [[ "${_contract_bytecode_path}" == "" && \
         "${_contract_compiler_output_path}" == "" ]]; then
     _contract_filename="$( \
@@ -216,7 +159,7 @@ _evm_deployer() {
     "${_contract_abi_path}"
     "${_contract_bytecode_path}"
     "${_contract_compiler_output_path}"
-    "${_network_backend}"
+    "${_rpc_backend}"
     "${_api_key_path}"
   )
   _msg_info \
@@ -268,6 +211,10 @@ _set_overrides() {
     "target" \
     "network" \
     "Gnosis"
+  _set_override \
+    "rpc" \
+    "selection" \
+    "kirsh"
   _api_key_auto_detect \
     "${target_network}"
   _set_override \
@@ -355,6 +302,8 @@ Usage:
                                      Default: ${wallet_seed}
      -n <network>                    EVM network name.
                                      Default: ${target_network}
+     -R <rpc_selection>              RPC selection method.
+                                     Default: ${rpc_selection}
      -k <api_key>                    Etherscan-like service key.
                                      Default: ${api_key}
      -A <contract_abi>               Contract ABI.
@@ -402,6 +351,7 @@ _show_config() {
   _msg_info "          Wallet password:   ${wallet_password}"
   _msg_info "              Wallet seed:   ${wallet_seed}"
   _msg_info "           Target network:   ${target_network}"
+  _msg_info "     RPC selection method:   ${rpc_selection}"
   _msg_info "                  API key:   ${api_key}"
   _msg_info "             Contract ABI:   ${contract_abi}"
   _msg_info "        Contract bytecode:   ${contract_bytecode}"
@@ -420,7 +370,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:k:b:C:e:A:B:O:cvh?' \
+    'w:p:s:n:R:k:b:C:e:A:B:O:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -428,6 +378,7 @@ while \
     p) override_wallet_password="${OPTARG}" ;;
     s) override_wallet_seed="${OPTARG}" ;;
     n) override_target_network="${OPTARG}" ;;
+    R) override_rpc_selection="${OPTARG}" ;;
     k) override_api_key="${OPTARG}" ;;
     b) override_compiler_backend="${OPTARG}" ;;
     C) override_solc_version="${OPTARG}" ;;
@@ -468,6 +419,7 @@ app_opts=(
   "${wallet_password}"
   "${wallet_seed}"
   "${target_network}"
+  "${rpc_selection}"
   "${api_key}"
   "${contract_abi}"
   "${contract_bytecode}"
