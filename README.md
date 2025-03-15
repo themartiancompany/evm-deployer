@@ -36,8 +36,8 @@ and uses
 [Solidity compiler](
   https://github.com/themartiancompany/solidity-compiler)
 to compile contracts and
-[EVM Contract Tools](
-  https://github.com/themartiancompany/evm-contracts-tools)
+[Ethers](
+  https://github.com/ethers-io/ethers)
 to deploy contracts.
 
 ## Installation
