@@ -71,7 +71,7 @@ ur \
 A censorable HTTP Github mirror of the recipe published there,
 containing a full list of the software dependencies needed to run the
 tools is hosted on
-[evm-chains-info-ur](
+[evm-deployer-ur](
   https://github.com/themartiancompany/evm-deployer-ur).
 Be aware the mirror could go offline any time as Github and more
 in general all HTTP resources are inherently unstable and censorable.
