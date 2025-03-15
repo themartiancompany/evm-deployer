@@ -38,6 +38,7 @@ _global_variables() {
   solc_version=""
   api_key=""
   wallet_name=""
+  retries_max=""
   color=""
   quiet=""
 }
@@ -48,8 +49,7 @@ _requirements() {
   _check_cmd \
     'evm-wallet'
   _check_cmd \
-    'node' \
-    'nodejs'
+    'node-run'
   _check_cmd \
     'solidity-compiler'
 }
@@ -60,28 +60,6 @@ _get_conf_dir_path() {
   _dir="${HOME}/.config/${app_name}"
   echo \
     "${_dir}"
-}
-
-_node_run() {
-  local \
-    _cmd="${1}" \
-    _args=() \
-    _node_path \
-    _lib
-  shift \
-    1
-  _args=(
-    "$@"
-  )
-  _lib="$( \
-    _get_lib)"
-  _node_path="${_lib}/node_modules" 
-  export \
-    NODE_PATH="${_node_path}"
-  NODE_PATH="${_node_path}" \
-  node \
-    "${_cmd}" \
-      "${_args[@]}"
 }
 
 _evm_deployer() {
@@ -98,7 +76,9 @@ _evm_deployer() {
     _compiler_backend="${10}" \
     _solc_version="${11}" \
     _evm_version="${12}" \
+    _retries_max="${13}" \
     _target_contracts=() \
+    _node_run_opts=() \
     _contract_filename \
     _contract_name \
     _cmd \
@@ -106,9 +86,13 @@ _evm_deployer() {
     _rpc_backend \
     _tmp
   shift \
-    12
+    13
   _target_contracts+=(
     "$@"
+  )
+  _node_run_opts+=(
+    -r
+      "${_retries_max}"
   )
   _cmd="$( \
     _get_lib)/${app_name}/deployer"
@@ -164,7 +148,8 @@ _evm_deployer() {
   )
   _msg_info \
     "Running node with options '${_args[*]}'."
-  _node_run \
+  node-run \
+    "${_node_run_opts[@]}" \
     "${_cmd}" \
     "${_args[@]}"
 }
@@ -252,6 +237,10 @@ _set_overrides() {
     "evm" \
     "version" \
     ""
+  _set_override \
+    "retries" \
+    "max" \
+    "10"
   if [[ "${target_contracts[*]}" != "" ]]; then
     _set_override \
       "contract" \
@@ -318,6 +307,9 @@ Usage:
                                      Default: ${solc_version}
      -e <evm_version>                EVM version.
                                      Default: ${evm_version}
+     -r <retries_max>                Maximum number of retries before
+                                     failing.
+                                     Default: ${retries_max}
 
      -h                              This message.
      -c                              Enable color output
@@ -359,6 +351,7 @@ _show_config() {
   _msg_info "             Solc version:   ${solc_version}"
   _msg_info "              EVM version:   ${evm_version}"
   _msg_info "         Compiler backend:   ${compiler_backend}"
+  _msg_info "          Maximum retries:   ${retries_max}"
   _msg_info "         Target contracts:   ${target_contracts[*]}"
 }
 
@@ -370,7 +363,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:R:k:b:C:e:A:B:O:cvh?' \
+    'w:p:s:n:R:k:b:C:e:A:B:O:r:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -386,6 +379,7 @@ while \
     A) override_contract_abi="${OPTARG}" ;;
     B) override_contract_bytecode="${OPTARG}" ;;
     O) override_contract_compiler_output="${OPTARG}" ;;
+    r) override_retries_max="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
     h|?) _set_overrides && \
@@ -427,6 +421,7 @@ app_opts=(
   "${compiler_backend}"
   "${solc_version}"
   "${evm_version}"
+  "${retries_max}"
   "${target_contracts[@]}"
 )
 _evm_deployer \
