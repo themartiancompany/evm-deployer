@@ -21,13 +21,14 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+
 ==============
 evm-deployer
 ==============
 
---------------------------------------------------------
+-----------------------------------------------------------
 Ethereum Virtual Machine Soldity smart contracts deployer
---------------------------------------------------------
+-----------------------------------------------------------
 :Version: evm-deployer |version|
 :Manual section: 1
 
