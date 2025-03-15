@@ -35,7 +35,10 @@ It tightly integrates with
 and uses
 [Solidity compiler](
   https://github.com/themartiancompany/solidity-compiler)
-to compile contracts and
+to compile contracts,
+[EVM Chains Info](
+  https://github.com/themartiancompany/evm-chains-info)
+to retrieve informations about the blockchain networks and
 [Ethers](
   https://github.com/ethers-io/ethers)
 to deploy contracts.
