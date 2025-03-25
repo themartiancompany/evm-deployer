@@ -35,9 +35,12 @@ It tightly integrates with
 and uses
 [Solidity compiler](
   https://github.com/themartiancompany/solidity-compiler)
-to compile contracts and
-[EVM Contract Tools](
-  https://github.com/themartiancompany/evm-contracts-tools)
+to compile contracts,
+[EVM Chains Info](
+  https://github.com/themartiancompany/evm-chains-info)
+to retrieve informations about the blockchain networks and
+[Ethers](
+  https://github.com/ethers-io/ethers)
 to deploy contracts.
 
 ## Installation
@@ -70,8 +73,8 @@ ur \
 
 A censorable HTTP Github mirror of the recipe published there,
 containing a full list of the software dependencies needed to run the
-tools is hosted on
-[evm-chains-info-ur](
+program is hosted on
+[evm-deployer-ur](
   https://github.com/themartiancompany/evm-deployer-ur).
 Be aware the mirror could go offline any time as Github and more
 in general all HTTP resources are inherently unstable and censorable.
