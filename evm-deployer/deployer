@@ -18,8 +18,12 @@ _dirname =
   _libcrash._dirname;
 _file_read =
   _libcrash._file_read;
+_file_write =
+  _libcrash._file_write;
 _json_read =
   _libcrash._json_read;
+_json_display =
+  _libcrash._json_display;
 _msg_info =
   _libcrash._msg_info;
 _msg_error =
@@ -43,6 +47,10 @@ function
   _global_variables() {
   app_name =
     "deployer";
+  retries_max =
+    "";
+  call_timeout =
+    "";
   wallet_seed =
     "";
   contract_abi_path =
@@ -55,10 +63,11 @@ function
     "";
   api_key_path =
     "";
+  output_file =
+    "";
   quiet =
     "";
 }
-
 
 function
   _msg_info_provider_generated(
@@ -67,7 +76,7 @@ function
     _msg,
     _template;
   _template =
-    "provider '{_provider}' generated";
+    "Provider '{_provider}' generated.";
   _msg =
     _template.replaceAll(
       "{_provider}",
@@ -76,7 +85,6 @@ function
     _msg);
 }
 
-
 function
   _msg_info_contract_deployed(
     _contract) {
@@ -84,7 +92,7 @@ function
     _msg,
     _template;
   _template =
-    "deployed contract '{_contract}'";
+    "Deployed contract '{_contract}'.";
   _msg =
     _template.replaceAll(
       "{_contract}",
@@ -93,27 +101,99 @@ function
     _msg);
 }
 
+// This function is horrible, yet
+function
+  _error_handle(
+    _error) {
+  let
+    _msg;
+  if ( _error == undefined ) {
+    _msg =
+      "Error undefined."
+  }
+  else if ( 'error' in _error && 
+       _error['error'] != undefined &&
+       'message' in _error['error'] ) {
+    _msg =
+      _error['error']['message'];
+  }
+  else if ( 'shortMessage' in _error ) {
+    _msg =
+      _error['shortMessage'];
+  }
+  else {
+    _msg =
+      "Unknown error.";
+    console.error(
+      _error);
+  }
+  _msg_error(
+    _msg,
+    0);
+}
+
+function
+  _msg_error_deployment_undefined(
+    _attempt) {
+  let
+    _msg,
+    _template;
+  _template =
+    "Deployment transaction undefined at attempt '{_attempt}'.";
+  _msg =
+    _template.replaceAll(
+      "{_attempt}",
+      _attempt);
+  _msg_info(
+    _msg);
+  _msg_error(
+    _msg,
+    0);
+}
 
 async function
   _evm_deployer(
+    _retries_max,
+    _call_timeout,
     _wallet_seed,
     _contract_abi_path,
     _contract_bytecode_path,
     _contract_compiler_output_path,
     _target_network,
-    _api_key_path) {
+    _api_key_path,
+    _output_file) {
   let
     _api_key,
+    _attempt,
     _contract,
     _contract_abi,
     _contract_bytecode,
     _contract_compiler_output,
     _factory,
+    _json,
     _wallet,
     _wallet_get_opts,
     _wallet_password,
     _wallet_path_list,
     _wallet_path;
+  if ( _retries_max == "" ) {
+    _msg_info(
+      "Setting maximum call retries to '100'.");
+    _retries_max =
+      100;
+  }
+  _retries_max =
+    Number(
+      _retries_max);
+  if ( _call_timeout == "" ) {
+    _msg_info(
+      "Setting timeout to '300' seconds.");
+    _call_timeout =
+      300;
+  }
+  _call_timeout =
+    Number(
+      _call_timeout);
   _wallet_password =
     "";
   _wallet_path_list = [
@@ -139,7 +219,7 @@ async function
       _api_key);
   _msg_info_provider_generated(
     _provider);
-  _wallet_get_opts=[
+  _wallet_get_opts = [
     _wallet_path,
     _wallet_password,
     _wallet_seed,
@@ -177,12 +257,59 @@ async function
   _factory =
     _factory.connect(
       _wallet);
-  _contract = await
-    _factory.deploy();
-  _msg_info_contract_deployed(
-    _contract);
-  console.log(
-    _contract.target);
+  _attempt =
+    1;
+  while ( _attempt <= _retries_max ) {
+    try {
+      _contract = await
+        _factory.deploy();
+      // It seems there is no
+      // timeout for the deployments.
+      // Probably there's a global one
+      // defined at provider's level
+      // which could be tweaked, but
+      // definitely not now.
+      _contract =
+        await _contract.waitForDeployment();
+      if ( _contract == undefined ) {
+        _msg_error_deployment_undefined(
+          _attempt);
+        throw "Contract undefined."
+      }
+      else if ( _contract != undefined ) {
+      _msg_info_contract_deployed(
+        _contract);
+        if ( quiet == "n" ) {
+          console.log(
+            _contract);
+	}
+        if ( _output_file != "" ) {
+          _json =
+            _json_display(
+              _contract);
+          _file_write(
+            _output_file,
+            _json);
+        }
+        _msg_info(
+          "Deployment transaction sent.");
+        break;
+        }
+    } catch (e) {
+      _error_handle(
+        e);
+      _msg_info(
+        "Waiting 3 seconds before retrying.");
+      await _delay(
+        3000);
+        _attempt =
+          _attempt + 1;
+    }
+  }
+  if ( _attempt > _retries_max ) {
+    throw "Maximum number of retries reached.";
+  }
+  return _contract;
 }
 
 function
@@ -204,6 +331,10 @@ function
     "                 API Key: {api_key}".replace(
       "{api_key}",
       api_key_path));
+  _text.push(
+    "             Output file: {output_file}".replace(
+      "{output_file}",
+      output_file));
   _text.push(
     "            Contract ABI: {contract_abi_path}".replace(
       "{contract_abi_path}",
@@ -232,12 +363,41 @@ function
     "Usage:",
     "  deployer",
     "    <quiet>",
+    "    <retries_max>",
+    "    <call_timeout>",
     "    <seed_path>",
     "    <contract_abi_path>",
     "    <contract_bytecode_path>",
     "    <contract_compiler_output_path>",
     "    (<target_network>)",
-    "    (<api_key>)"];
+    "    (<api_key>)"
+    "    (<output_file>)"
+    "",
+    "Args:",
+    "  <quiet>                          Can be 'y' or 'n'",
+    "                                   Default: y",
+    "  <retries_max>                    Maximum number of retries before",
+    "                                   failing.",
+    "  <call_timeout>                   How much seconds to wait for a return",
+    "                                   before declaring the call failed.",
+    "  <wallet_seed>                    Path of the file containing",
+    "                                   the seed phrase.",
+    "  <contract_abi_path>              Contract ABI path.",
+    "  <contract_bytecode_path>         Path for the contract bytecode.",
+    "  <contract_compiler_output_path>  Path for the contract compiler",
+    "                                   output path (the hardhat artifact).",
+    "  <target_network>                 Network on which the contract",
+    "                                   resides.",
+    "  <api_key_path>                   Path of the API key for the",
+    "                                   contract ABI provider service.",
+    "  <output_file>                    Path for an output file in which",
+    "                                   to save the contract object generated",
+    "                                   by the deployment call. Absolutely",
+    "                                   not necessary.",
+    "",
+    "  Options:",
+    "    -h (--help)                    This help."
+  ];
   for ( _line of _text ) {
     _msg_info(
       _line);
@@ -260,27 +420,39 @@ function _cmdline_parse() {
           _value;
       }
       if ( _index == 3 ) {
-        wallet_seed =
+        retries_max =
           _value;
       }
       if ( _index == 4 ) {
-        contract_abi_path =
+        call_timeout =
           _value;
       }
       if ( _index == 5 ) {
-        contract_bytecode_path =
+        wallet_seed =
           _value;
       }
       if ( _index == 6 ) {
-        contract_compiler_output_path =
+        contract_abi_path =
           _value;
       }
       if ( _index == 7 ) {
-        target_network =
+        contract_bytecode_path =
           _value;
       }
       if ( _index == 8 ) {
+        contract_compiler_output_path =
+          _value;
+      }
+      if ( _index == 9 ) {
+        target_network =
+          _value;
+      }
+      if ( _index == 10 ) {
         api_key_path =
+          _value;
+      }
+      if ( _index == 11 ) {
+        output_file =
           _value;
       }
       if ( _value == "-h" ||
@@ -302,14 +474,51 @@ function _cmdline_parse() {
 
 function 
   _overrides_set() {
+  if ( retries_max == "" ) {
+    retries_max =
+      100;
+  }
+  if ( call_timeout == "" ) {
+    call_timeout =
+      300;
+  }
   if ( target_network == "" ) {
     _msg_info(
-      "No network selected, setting gnosis");
+      "No network selected, setting Gnosis");
     target_network =
       "https://rpc.gnosischain.com";
   }
 }
 
+async function 
+  _evm_deployer_cmdline(
+    _app_opts) {
+  let
+    _contract,
+    _address;
+  try {
+    _contract =
+      await _evm_deployer.apply(
+        null,
+        app_opts);
+    if ( _contract != undefined ) {
+      _address =
+        await _contract.getAddress();
+      console.log(
+        _address);
+    }
+    else if ( _contract == undefined ) {
+      throw "Error deploying the contract."
+    }
+   } catch (error) {
+    _msg_error(
+      "Contract deployment failed.",
+      0);
+    _error_handle(
+      error)
+    throw error;
+  };
+}
 
 if ( _cmdline_check(
        "deployer") == true ) {
@@ -318,15 +527,17 @@ if ( _cmdline_check(
   _overrides_set();
   _config_show();
   app_opts = [
+    retries_max,
+    call_timeout,
     wallet_seed,
     contract_abi_path,
     contract_bytecode_path,
     contract_compiler_output_path,
     target_network,
     api_key_path,
+    output_file
   ];
-  _evm_deployer.apply(
-    null,
+  _evm_deployer_cmdline(
     app_opts);
 }
 

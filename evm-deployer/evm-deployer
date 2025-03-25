@@ -58,6 +58,8 @@ _global_variables() {
   api_key=""
   wallet_name=""
   retries_max=""
+  call_timeout=""
+  output_file=""
   color=""
   quiet=""
 }
@@ -96,6 +98,9 @@ _evm_deployer() {
     _solc_version="${11}" \
     _evm_version="${12}" \
     _retries_max="${13}" \
+    _call_timeout="${14}" \
+    _cache_dir="${15}" \
+    _output_file="${16}" \
     _target_contracts=() \
     _node_run_opts=() \
     _contract_filename \
@@ -105,7 +110,7 @@ _evm_deployer() {
     _rpc_backend \
     _tmp
   shift \
-    13
+    16
   _target_contracts+=(
     "$@"
   )
@@ -158,12 +163,15 @@ _evm_deployer() {
   fi
   _args+=(
     "${quiet}"
+    "${_retries_max}"
+    "${_call_timeout}"
     "${_wallet_seed}"
     "${_contract_abi_path}"
     "${_contract_bytecode_path}"
     "${_contract_compiler_output_path}"
     "${_rpc_backend}"
     "${_api_key_path}"
+    "${_output_file}"
   )
   _msg_info \
     "Running node with options '${_args[*]}'."
@@ -192,6 +200,47 @@ _contract_bytecode_auto_detect() {
     "${_bytecode}"
 }
 
+_file_hash() {
+  local \
+    _file="${1}"
+  sha256sum \
+    "${_file}" | \
+    awk \
+      '{print $1}'
+}
+
+# This works with a single file actually
+_output_file_auto_detect() {
+  local \
+    _cache_dir \
+    _output_dir \
+    _output_file \
+    _contract_name \
+    _contract_dir \
+    _network_dir
+  _contract_name="$( \
+    basename \
+      "${target_contracts[0]}")"
+  _contract_hash="$( \
+    _file_hash \
+      "${target_contracts[0]}")"
+  _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}"
+  _output_dir="${_contract_dir}/${target_network}"
+  _output_file="${_output_dir}/contract.json"
+  mkdir \
+    -p \
+    "${_output_dir}" || \
+    true
+  chmod \
+    700 \
+    "${_output_dir}"
+  _set_override \
+    "output" \
+    "file" \
+    "${_output_file}"
+}
+
+
 _set_overrides() {
   if [[ -v override_quiet ]]; then
     quiet="${override_quiet}"
@@ -207,6 +256,10 @@ _set_overrides() {
     "deploy" \
     "date" \
     "$(_get_date_human)"
+  _set_override \
+    "cache" \
+    "dir" \
+    "${HOME}/.cache/${app_name}"
   _set_override \
     "wallet" \
     "name" \
@@ -260,6 +313,10 @@ _set_overrides() {
     "retries" \
     "max" \
     "10"
+  _set_override \
+    "call" \
+    "timeout" \
+    "300"
   if [[ "${target_contracts[*]}" != "" ]]; then
     _set_override \
       "contract" \
@@ -270,6 +327,7 @@ _set_overrides() {
       "compiler_output" \
       ""
     _contract_bytecode_auto_detect
+    _output_file_auto_detect
   fi
 }
 
@@ -329,6 +387,15 @@ Usage:
      -r <retries_max>                Maximum number of retries before
                                      failing.
                                      Default: ${retries_max}
+     -T <call_timeout>               Maximum number of seconds before
+                                     declaring the call failed.
+                                     Default: ${call_timeout}
+     -W <cache_dir>                  Work directory.
+                                     Default: ${cache_dir}
+     -o <output_file>                Where to save a JSON representing
+                                     the contract object resulting from
+                                     the deployment.
+                                     Default: ${output_file}
 
      -h                              This message.
      -c                              Enable color output
@@ -371,6 +438,8 @@ _show_config() {
   _msg_info "              EVM version:   ${evm_version}"
   _msg_info "         Compiler backend:   ${compiler_backend}"
   _msg_info "          Maximum retries:   ${retries_max}"
+  _msg_info "          Cache directory:   ${cache_dir}"
+  _msg_info "              Output file:   ${output_file}"
   _msg_info "         Target contracts:   ${target_contracts[*]}"
 }
 
@@ -382,7 +451,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:R:k:b:C:e:A:B:O:r:cvh?' \
+    'w:p:s:n:R:k:b:C:e:A:B:O:r:T:W:o:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -399,6 +468,9 @@ while \
     B) override_contract_bytecode="${OPTARG}" ;;
     O) override_contract_compiler_output="${OPTARG}" ;;
     r) override_retries_max="${OPTARG}" ;;
+    T) override_call_timeout="${OPTARG}" ;;
+    W) override_cache_dir="${OPTARG}" ;;
+    o) override_output_file="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
     h|?) _set_overrides && \
@@ -441,6 +513,9 @@ app_opts=(
   "${solc_version}"
   "${evm_version}"
   "${retries_max}"
+  "${call_timeout}"
+  "${cache_dir}"
+  "${_output_file}"
   "${target_contracts[@]}"
 )
 _evm_deployer \
