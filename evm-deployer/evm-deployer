@@ -59,6 +59,7 @@ _global_variables() {
   wallet_name=""
   retries_max=""
   call_timeout=""
+  cache_dir=""
   output_file=""
   color=""
   quiet=""
@@ -83,6 +84,20 @@ _get_conf_dir_path() {
     "${_dir}"
 }
 
+_bytecode_dir_setup() {
+  local \
+    _contract_dir
+  _contract_hash="$( \
+    _file_hash \
+      "${target_contracts[0]}")"
+  _contract_dir="${_cache_dir}/${_contract_filename}/${_contract_hash}"
+  _output_dir="${_contract_dir}/${target_network}/build"
+  _bytecode_dir="$( \
+    mktemp \
+      -p \
+      "${_output_dir}")"
+}
+
 _evm_deployer() {
   local \
     _wallet_path="${1}" \
@@ -105,10 +120,11 @@ _evm_deployer() {
     _node_run_opts=() \
     _contract_filename \
     _contract_name \
+    _contract_hash \
     _cmd \
     _args=() \
     _rpc_backend \
-    _tmp
+    _bytecode_dir
   shift \
     16
   _target_contracts+=(
@@ -129,9 +145,7 @@ _evm_deployer() {
       basename \
         "${_target_contracts}")"
     _contract_name="${_contract_filename%%.*}"
-    _bytecode_dir="$( \
-      mktemp \
-        -d)"
+    _bytecode_dir_setup
     _solidity_compiler_opts+=(
       -o
         "${_bytecode_dir}"
@@ -174,7 +188,7 @@ _evm_deployer() {
     "${_output_file}"
   )
   _msg_info \
-    "Running node with options '${_args[*]}'."
+    "Running '$(basename "${_cmd}")' with options '${_args[*]}'."
   node-run \
     "${_node_run_opts[@]}" \
     "${_cmd}" \
@@ -515,7 +529,7 @@ app_opts=(
   "${retries_max}"
   "${call_timeout}"
   "${cache_dir}"
-  "${_output_file}"
+  "${output_file}"
   "${target_contracts[@]}"
 )
 _evm_deployer \

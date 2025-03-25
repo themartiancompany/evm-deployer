@@ -69,6 +69,12 @@ Options
 -e evm_version                  EVM version.
 -r retries_max                  Maximum number of retries before
                                 failing.
+-T call_timeout                 Maximum number of seconds before
+                                declaring the call failed.
+-W cache_dir                    Work directory.
+-o output_file                  Where to save a JSON representing
+                                the contract object resulting from
+                                the deployment.
 
 -h                              Display help.
 -c                              Enable color output.
