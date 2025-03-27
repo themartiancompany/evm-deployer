@@ -151,6 +151,14 @@ function
     0);
 }
 
+function
+  _contract_sanitize(
+    _contract) {
+  _contract.runner =
+    null;
+  return _contract;
+}
+
 async function
   _evm_deployer(
     _retries_max,
@@ -279,6 +287,9 @@ async function
       else if ( _contract != undefined ) {
       _msg_info_contract_deployed(
         _contract);
+      _contract =
+        _contract_sanitize(
+          _contract);
         if ( quiet == "n" ) {
           console.log(
             _contract);
