@@ -515,7 +515,7 @@ function _cmdline_parse() {
         contract_output_file =
           _value;
       }
-      if ( _index == 11 ) {
+      if ( _index == 12 ) {
         tx_deployment_output_file =
           _value;
       }
