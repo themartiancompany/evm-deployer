@@ -244,9 +244,13 @@ _output_dir_default_setup() {
     _network_dir="${_contract_dir}/${target_network}"
     output_dir="$( \
       mktemp \
+        -u \
         -d \
         -p \
           "${_contract_dir}")"
+    mkdir \
+      -p \
+      "${output_dir}"
     chmod \
       700 \
       "${output_dir}"
