@@ -157,6 +157,8 @@ async function
   let
     _contract_sanitized,
     _field;
+  _contract_sanitized =
+    {};
   for (_field in _contract) {
     if ( _field != "runner" ) {
       _contract_sanitized[
@@ -166,6 +168,12 @@ async function
     }
   }
   return _contract_sanitized;
+}
+
+function
+  _delay(
+    _time) {
+  return new Promise(resolve => setTimeout(resolve, _time));
 }
 
 async function
