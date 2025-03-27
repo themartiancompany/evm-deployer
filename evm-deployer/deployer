@@ -199,9 +199,10 @@ async function
     _contract_compiler_output,
     _contract_json,
     _contract_sanitized,
+    _factory,
     _tx_deployment,
     _tx_deployment_json,
-    _factory,
+    _return,
     _wallet,
     _wallet_get_opts,
     _wallet_password,
@@ -353,7 +354,11 @@ async function
   if ( _attempt > _retries_max ) {
     throw "Maximum number of retries reached.";
   }
-  return _contract;
+  _return = [
+    _contract_sanitized,
+    _tx_deployment
+  ];
+  return _return;
 }
 
 function
@@ -552,17 +557,26 @@ async function
     _app_opts) {
   let
     _contract,
-    _address;
+    _address,
+    _tx_deployment,
+    _tx_hash;
   try {
-    _contract =
+    [ _contract,
+      _tx_deployment ] =
       await _evm_deployer.apply(
         null,
         app_opts);
     if ( _contract != undefined ) {
       _address =
         await _contract.getAddress();
+      _tx_hash =
+        _tx.hash;
       console.log(
+        "Address:",
         _address);
+      console.log(
+        "Transaction:",
+        _tx_hash);
     }
     else if ( _contract == undefined ) {
       throw "Error deploying the contract."

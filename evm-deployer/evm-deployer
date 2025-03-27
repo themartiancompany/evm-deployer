@@ -187,7 +187,8 @@ _evm_deployer() {
     "${_contract_compiler_output_path}"
     "${_rpc_backend}"
     "${_api_key_path}"
-    "${_output_file}"
+    "${_contract_output_file}"
+    "${_tx_deployment_output_file}"
   )
   _msg_info \
     "Running '$(basename "${_cmd}")' with options '${_args[*]}'."
@@ -480,8 +481,8 @@ _show_config() {
   _msg_info "                  Compiler backend:   ${compiler_backend}"
   _msg_info "                   Maximum retries:   ${retries_max}"
   _msg_info "                   Cache directory:   ${cache_dir}"
-  _msg_info "              Contract output file:   ${output_file}"
-  _msg_info "Deployment transaction output file:   ${output_file}"
+  _msg_info "              Contract output file:   ${contract_output_file}"
+  _msg_info "Deployment transaction output file:   ${tx_deployment_output_file}"
   _msg_info "                  Target contracts:   ${target_contracts[*]}"
 }
 
