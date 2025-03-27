@@ -151,10 +151,10 @@ function
     0);
 }
 
-function
+async function
   _contract_sanitize(
     _contract) {
-  _contract.runner =
+  _contract['runner'] =
     null;
   return _contract;
 }
@@ -285,11 +285,11 @@ async function
         throw "Contract undefined."
       }
       else if ( _contract != undefined ) {
-      _msg_info_contract_deployed(
-        _contract);
-      _contract =
-        _contract_sanitize(
+        _msg_info_contract_deployed(
           _contract);
+        _contract =
+          await _contract_sanitize(
+            _contract);
         if ( quiet == "n" ) {
           console.log(
             _contract);
