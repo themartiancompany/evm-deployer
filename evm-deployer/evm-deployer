@@ -238,7 +238,7 @@ _output_file_auto_detect() {
   _contract_hash="$( \
     _file_hash \
       "${target_contracts[0]}")"
-  _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}/${_target_network}"
+  _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}/${target_network}"
   _output_dir="$( \
     mktemp \
       -u \
