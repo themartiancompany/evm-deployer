@@ -570,9 +570,11 @@ async function
         app_opts);
     if ( _contract != undefined ) {
       _address =
-        await _contract.getAddress();
+        _contract[
+	  "target"];
       _tx_hash =
-        _tx.hash;
+        _tx[
+          "hash"];
       console.log(
         "Address:",
         _address);
