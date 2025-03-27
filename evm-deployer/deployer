@@ -319,6 +319,8 @@ async function
         if ( quiet == "n" ) {
           console.log(
             _contract_sanitized);
+          console.log(
+            _tx_deployment);
 	}
         if ( _contract_output_file != "" ) {
           _contract_json =
