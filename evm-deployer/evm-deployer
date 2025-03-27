@@ -60,7 +60,8 @@ _global_variables() {
   retries_max=""
   call_timeout=""
   cache_dir=""
-  output_file=""
+  contract_output_file=""
+  tx_deployment_output_file=""
   color=""
   quiet=""
 }
@@ -115,7 +116,8 @@ _evm_deployer() {
     _retries_max="${13}" \
     _call_timeout="${14}" \
     _cache_dir="${15}" \
-    _output_file="${16}" \
+    _contract_output_file="${16}" \
+    _tx_deployment_output_file="${17}" \
     _target_contracts=() \
     _node_run_opts=() \
     _contract_filename \
@@ -126,7 +128,7 @@ _evm_deployer() {
     _rpc_backend \
     _bytecode_dir
   shift \
-    16
+    17
   _target_contracts+=(
     "$@"
   )
@@ -223,39 +225,54 @@ _file_hash() {
       '{print $1}'
 }
 
-# This works with a single file actually
-_output_file_auto_detect() {
+_output_dir_default_setup() {
   local \
-    _cache_dir \
     _output_dir \
     _output_file \
     _contract_name \
     _contract_dir \
     _network_dir
-  _contract_name="$( \
-    basename \
-      "${target_contracts[0]}")"
-  _contract_hash="$( \
-    _file_hash \
-      "${target_contracts[0]}")"
-  _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}/${target_network}"
-  _output_dir="$( \
-    mktemp \
-      -u \
-      -d \
-      -p \
-        "${_contract_dir}")"
-  _output_file="${_output_dir}/contract.json"
-  mkdir \
-    -p \
-    "${_output_dir}" || \
-    true
-  chmod \
-    700 \
-    "${_output_dir}"
+  if [[ ! -v "output_dir" ]]; then
+    _contract_name="$( \
+      basename \
+        "${target_contracts[0]}")"
+    _contract_hash="$( \
+      _file_hash \
+        "${target_contracts[0]}")"
+    _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}"
+    _network_dir="${_contract_dir}/${target_network}"
+    output_dir="$( \
+      mktemp \
+        -d \
+        -p \
+          "${_contract_dir}")"
+    chmod \
+      700 \
+      "${output_dir}"
+  fi
+}
+
+# This works only for a single file actually
+_contract_output_file_auto_detect() {
+  local \
+    _output_file
+  _output_dir_default_setup
+  _output_file="${output_dir}/contract.json"
   _set_override \
-    "output" \
-    "file" \
+    "contract" \
+    "output_file" \
+    "${_output_file}"
+}
+
+# This works only for a single file actually
+_tx_deployment_output_file_auto_detect() {
+  local \
+    _output_file
+  _output_dir_default_setup
+  _output_file="${output_dir}/tx_deployment.json"
+  _set_override \
+    "tx_deployment" \
+    "output_file" \
     "${_output_file}"
 }
 
@@ -346,7 +363,8 @@ _set_overrides() {
       "compiler_output" \
       ""
     _contract_bytecode_auto_detect
-    _output_file_auto_detect
+    _contract_output_file_auto_detect
+    _tx_deployment_output_file_auto_detect
   fi
 }
 
@@ -411,10 +429,14 @@ Usage:
                                      Default: ${call_timeout}
      -W <cache_dir>                  Work directory.
                                      Default: ${cache_dir}
-     -o <output_file>                Where to save a JSON representing
+     -o <contract_output_file>       Where to save a JSON representing
                                      the contract object resulting from
                                      the deployment.
-                                     Default: ${output_file}
+                                     Default: ${contract_output_file}
+     -x <tx_deployment_output_file>  Where to save a JSON representing
+                                     the transaction object resulting from
+                                     the deployment.
+                                     Default: ${tx_deployment_output_file}
 
      -h                              This message.
      -c                              Enable color output
@@ -443,23 +465,24 @@ _display_flags() {
 # Shows configuration options.
 _show_config() {
   _msg_info "${app_name} configuration"
-  _msg_info "              Deploy date:   ${deploy_date}"
-  _msg_info "              Wallet path:   ${wallet_path}"
-  _msg_info "          Wallet password:   ${wallet_password}"
-  _msg_info "              Wallet seed:   ${wallet_seed}"
-  _msg_info "           Target network:   ${target_network}"
-  _msg_info "     RPC selection method:   ${rpc_selection}"
-  _msg_info "                  API key:   ${api_key}"
-  _msg_info "             Contract ABI:   ${contract_abi}"
-  _msg_info "        Contract bytecode:   ${contract_bytecode}"
-  _msg_info " Contract compiler output:   ${contract_compiler_output}"
-  _msg_info "             Solc version:   ${solc_version}"
-  _msg_info "              EVM version:   ${evm_version}"
-  _msg_info "         Compiler backend:   ${compiler_backend}"
-  _msg_info "          Maximum retries:   ${retries_max}"
-  _msg_info "          Cache directory:   ${cache_dir}"
-  _msg_info "              Output file:   ${output_file}"
-  _msg_info "         Target contracts:   ${target_contracts[*]}"
+  _msg_info "                       Deploy date:   ${deploy_date}"
+  _msg_info "                       Wallet path:   ${wallet_path}"
+  _msg_info "                   Wallet password:   ${wallet_password}"
+  _msg_info "                       Wallet seed:   ${wallet_seed}"
+  _msg_info "                    Target network:   ${target_network}"
+  _msg_info "              RPC selection method:   ${rpc_selection}"
+  _msg_info "                           API key:   ${api_key}"
+  _msg_info "                      Contract ABI:   ${contract_abi}"
+  _msg_info "                 Contract bytecode:   ${contract_bytecode}"
+  _msg_info "          Contract compiler output:   ${contract_compiler_output}"
+  _msg_info "                      Solc version:   ${solc_version}"
+  _msg_info "                       EVM version:   ${evm_version}"
+  _msg_info "                  Compiler backend:   ${compiler_backend}"
+  _msg_info "                   Maximum retries:   ${retries_max}"
+  _msg_info "                   Cache directory:   ${cache_dir}"
+  _msg_info "              Contract output file:   ${output_file}"
+  _msg_info "Deployment transaction output file:   ${output_file}"
+  _msg_info "                  Target contracts:   ${target_contracts[*]}"
 }
 
 _globals
@@ -470,7 +493,7 @@ _config_user_init \
 # shellcheck disable=SC2034
 while \
   getopts \
-    'w:p:s:n:R:k:b:C:e:A:B:O:r:T:W:o:cvh?' \
+    'w:p:s:n:R:k:b:C:e:A:B:O:r:T:W:o:x:cvh?' \
     arg; do
   case \
     "${arg}" in
@@ -489,7 +512,8 @@ while \
     r) override_retries_max="${OPTARG}" ;;
     T) override_call_timeout="${OPTARG}" ;;
     W) override_cache_dir="${OPTARG}" ;;
-    o) override_output_file="${OPTARG}" ;;
+    o) override_contract_output_file="${OPTARG}" ;;
+    x) override_tx_deployment_output_file="${OPTARG}" ;;
     c) override_color="y" ;;
     v) override_quiet="n" ;;
     h|?) _set_overrides && \
@@ -510,7 +534,7 @@ shift \
   ))
 if (( 0 == $# )); then
   _msg_error \
-    "no contracts given" \
+    "No contracts given." \
     1
 fi
 target_contracts+=(
@@ -534,7 +558,8 @@ app_opts=(
   "${retries_max}"
   "${call_timeout}"
   "${cache_dir}"
-  "${output_file}"
+  "${contract_output_file}"
+  "${tx_deployment_output_file}"
   "${target_contracts[@]}"
 )
 _evm_deployer \

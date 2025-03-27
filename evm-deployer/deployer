@@ -63,7 +63,9 @@ function
     "";
   api_key_path =
     "";
-  output_file =
+  contract_output_file =
+    "";
+  tx_deployment_output_file =
     "";
   quiet =
     "";
@@ -186,7 +188,8 @@ async function
     _contract_compiler_output_path,
     _target_network,
     _api_key_path,
-    _output_file) {
+    _contract_output_file,
+    _tx_deployment_output_file) {
   let
     _api_key,
     _attempt,
@@ -194,9 +197,11 @@ async function
     _contract_abi,
     _contract_bytecode,
     _contract_compiler_output,
+    _contract_json,
     _contract_sanitized,
+    _tx_deployment,
+    _tx_deployment_json,
     _factory,
-    _json,
     _wallet,
     _wallet_get_opts,
     _wallet_password,
@@ -303,6 +308,8 @@ async function
         throw "Contract undefined."
       }
       else if ( _contract != undefined ) {
+        _tx_deployment =
+          await _factory.getDeployTransaction();
         _contract_sanitized =
           await _contract_sanitize(
             _contract);
@@ -312,13 +319,21 @@ async function
           console.log(
             _contract_sanitized);
 	}
-        if ( _output_file != "" ) {
-          _json =
+        if ( _contract_output_file != "" ) {
+          _contract_json =
             _json_display(
               _contract_sanitized);
           _file_write(
-            _output_file,
-            _json);
+            _contract_output_file,
+            _contract_json);
+        }
+        if ( _tx_deployment_output_file != "" ) {
+          _tx_deployment_json =
+            _json_display(
+              _tx_deployment);
+          _file_write(
+            _tx_deployment_output_file,
+            _tx_deployment_json);
         }
         _msg_info(
           "Deployment transaction sent.");
@@ -349,33 +364,37 @@ function
   _text =
     [];
   _text.push(
-    "             Wallet seed: {wallet_seed}".replace(
+    "                       Wallet seed: {wallet_seed}".replace(
       "{wallet_seed}",
       wallet_seed));
   _text.push(
-    "          Target network: {target_network}".replace(
+    "                    Target network: {target_network}".replace(
       "{target_network}",
       target_network));
   _text.push(
-    "                 API Key: {api_key}".replace(
+    "                           API Key: {api_key}".replace(
       "{api_key}",
       api_key_path));
   _text.push(
-    "             Output file: {output_file}".replace(
-      "{output_file}",
-      output_file));
-  _text.push(
-    "            Contract ABI: {contract_abi_path}".replace(
+    "                      Contract ABI: {contract_abi_path}".replace(
       "{contract_abi_path}",
       contract_abi_path));
   _text.push(
-    "       Contract bytecode: {contract_bytecode_path}".replace(
+    "                 Contract bytecode: {contract_bytecode_path}".replace(
       "{contract_bytecode_path}",
       contract_bytecode_path));
   _text.push(
-    "Contract compiler output: {contract_compiler_output_path}".replace(
+    "          Contract compiler output: {contract_compiler_output_path}".replace(
       "{contract_compiler_output_path}",
       contract_compiler_output_path));
+  _text.push(
+    "              Contract output file: {contract_output_file}".replace(
+      "{contract_output_file}",
+      contract_output_file));
+  _text.push(
+    "Deployment transaction output file: {tx_deployment_output_file}".replace(
+      "{tx_deployment_output_file}",
+      tx_deployment_output_file));
   for ( _line of _text ) {
     _msg_info(
       _line);
@@ -400,7 +419,8 @@ function
     "    <contract_compiler_output_path>",
     "    (<target_network>)",
     "    (<api_key>)",
-    "    (<output_file>)",
+    "    (<contract_output_file>)",
+    "    (<tx_deployment_output_file>)",
     "",
     "Args:",
     "  <quiet>                          Can be 'y' or 'n'",
@@ -419,10 +439,14 @@ function
     "                                   resides.",
     "  <api_key_path>                   Path of the API key for the",
     "                                   contract ABI provider service.",
-    "  <output_file>                    Path for an output file in which",
+    "  <contract_output_file>           Path for an output file in which",
     "                                   to save the contract object generated",
     "                                   by the deployment call. Absolutely",
     "                                   not necessary.",
+    "  <tx_deployment_output_file>      Path for an output file in which",
+    "                                   to save the transaction object generated",
+    "                                   by the deployment call. Absolutely",
+    "                                   necessary.",
     "",
     "  Options:",
     "    -h (--help)                    This help."
@@ -481,7 +505,11 @@ function _cmdline_parse() {
           _value;
       }
       if ( _index == 11 ) {
-        output_file =
+        contract_output_file =
+          _value;
+      }
+      if ( _index == 11 ) {
+        tx_deployment_output_file =
           _value;
       }
       if ( _value == "-h" ||
@@ -564,7 +592,8 @@ if ( _cmdline_check(
     contract_compiler_output_path,
     target_network,
     api_key_path,
-    output_file
+    contract_output_file,
+    tx_deployment_output_file
   ];
   _evm_deployer_cmdline(
     app_opts);
