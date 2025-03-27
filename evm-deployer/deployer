@@ -154,13 +154,18 @@ function
 async function
   _contract_sanitize(
     _contract) {
-  _contract.runner =
-    {};
-  _contract['runner'] =
-    {};
-  _contract.connect(
-    {});
-  return _contract;
+  let
+    _contract_sanitized,
+    _field;
+  for (_field in _contract) {
+    if ( _field != "runner" ) {
+      _contract_sanitized[
+        _field] =
+        _contract[
+          _field];
+    }
+  }
+  return _contract_sanitized;
 }
 
 async function
@@ -292,7 +297,7 @@ async function
       else if ( _contract != undefined ) {
         _contract_sanitized =
           await _contract_sanitize(
-            _contract_sanitized);
+            _contract);
         _msg_info_contract_deployed(
           _contract_sanitized);
         if ( quiet == "n" ) {
