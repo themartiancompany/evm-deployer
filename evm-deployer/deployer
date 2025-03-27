@@ -181,6 +181,7 @@ async function
     _contract_abi,
     _contract_bytecode,
     _contract_compiler_output,
+    _contract_sanitized,
     _factory,
     _json,
     _wallet,
@@ -289,19 +290,19 @@ async function
         throw "Contract undefined."
       }
       else if ( _contract != undefined ) {
-        _msg_info_contract_deployed(
-          _contract);
-        _contract =
+        _contract_sanitized =
           await _contract_sanitize(
-            _contract);
+            _contract_sanitized);
+        _msg_info_contract_deployed(
+          _contract_sanitized);
         if ( quiet == "n" ) {
           console.log(
-            _contract);
+            _contract_sanitized);
 	}
         if ( _output_file != "" ) {
           _json =
             _json_display(
-              _contract);
+              _contract_sanitized);
           _file_write(
             _output_file,
             _json);
