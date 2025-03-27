@@ -154,8 +154,12 @@ function
 async function
   _contract_sanitize(
     _contract) {
+  _contract.runner =
+    null;
   _contract['runner'] =
     null;
+  _contract.connect(
+    null);
   return _contract;
 }
 
