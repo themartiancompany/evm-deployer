@@ -306,11 +306,13 @@ async function
       if ( _contract == undefined ) {
         _msg_error_deployment_undefined(
           _attempt);
-        throw "Contract undefined."
+        throw "Contract undefined, error deploying."
       }
       else if ( _contract != undefined ) {
+        // _tx_deployment =
+        //   await _factory.getDeployTransaction();
         _tx_deployment =
-          await _factory.getDeployTransaction();
+          _contract.deploymentTransaction();
         _contract_sanitized =
           await _contract_sanitize(
             _contract);
