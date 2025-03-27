@@ -370,8 +370,8 @@ function
     "    <contract_bytecode_path>",
     "    <contract_compiler_output_path>",
     "    (<target_network>)",
-    "    (<api_key>)"
-    "    (<output_file>)"
+    "    (<api_key>)",
+    "    (<output_file>)",
     "",
     "Args:",
     "  <quiet>                          Can be 'y' or 'n'",
