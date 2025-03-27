@@ -238,8 +238,13 @@ _output_file_auto_detect() {
   _contract_hash="$( \
     _file_hash \
       "${target_contracts[0]}")"
-  _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}"
-  _output_dir="${_contract_dir}/${target_network}"
+  _contract_dir="${cache_dir}/${_contract_name}/${_contract_hash}/${_target_network}"
+  _output_dir="$( \
+    mktemp \
+      -u \
+      -d \
+      -p \
+        "${_contract_dir}")"
   _output_file="${_output_dir}/contract.json"
   mkdir \
     -p \
