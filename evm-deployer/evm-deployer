@@ -357,7 +357,7 @@ _set_overrides() {
   _set_override \
     "call" \
     "timeout" \
-    "300"
+    "300000"
   if [[ "${target_contracts[*]}" != "" ]]; then
     _set_override \
       "contract" \
@@ -429,7 +429,7 @@ Usage:
      -r <retries_max>                Maximum number of retries before
                                      failing.
                                      Default: ${retries_max}
-     -T <call_timeout>               Maximum number of seconds before
+     -T <call_timeout>               Maximum number of milliseconds before
                                      declaring the call failed.
                                      Default: ${call_timeout}
      -W <cache_dir>                  Work directory.
