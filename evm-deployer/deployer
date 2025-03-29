@@ -16,6 +16,8 @@ _cmdline_check =
   _libcrash._cmdline_check;
 _dirname =
   _libcrash._dirname;
+_error_display =
+  _libcrash._error_display;
 _file_read =
   _libcrash._file_read;
 _file_write =
@@ -101,37 +103,6 @@ function
       _contract);
   _msg_info(
     _msg);
-}
-
-// This function is horrible, yet
-function
-  _error_handle(
-    _error) {
-  let
-    _msg;
-  if ( _error == undefined ) {
-    _msg =
-      "Error undefined."
-  }
-  else if ( 'error' in _error && 
-       _error['error'] != undefined &&
-       'message' in _error['error'] ) {
-    _msg =
-      _error['error']['message'];
-  }
-  else if ( 'shortMessage' in _error ) {
-    _msg =
-      _error['shortMessage'];
-  }
-  else {
-    _msg =
-      "Unknown error.";
-    console.error(
-      _error);
-  }
-  _msg_error(
-    _msg,
-    0);
 }
 
 function
@@ -221,7 +192,7 @@ async function
     _msg_info(
       "Setting timeout to '300' seconds.");
     _call_timeout =
-      300;
+      300000;
   }
   _call_timeout =
     Number(
@@ -344,9 +315,10 @@ async function
           "Deployment transaction sent.");
         break;
         }
-    } catch (e) {
-      _error_handle(
-        e);
+    } catch (
+        _error) {
+      _error_display(
+        _error);
       _msg_info(
         "Waiting 3 seconds before retrying.");
       await _delay(
@@ -436,7 +408,7 @@ function
     "                                   Default: y",
     "  <retries_max>                    Maximum number of retries before",
     "                                   failing.",
-    "  <call_timeout>                   How much seconds to wait for a return",
+    "  <call_timeout>                   How many milliseconds to wait for a return",
     "                                   before declaring the call failed.",
     "  <wallet_seed>                    Path of the file containing",
     "                                   the seed phrase.",
@@ -546,7 +518,7 @@ function
   }
   if ( call_timeout == "" ) {
     call_timeout =
-      300;
+      300000;
   }
   if ( target_network == "" ) {
     _msg_info(
@@ -585,15 +557,18 @@ async function
         _tx_hash);
     }
     else if ( _contract == undefined ) {
-      throw "Error deploying the contract."
+      throw { "error": {
+                "message":
+                  "Error deploying the contract." } };
     }
-   } catch (error) {
+   } catch (
+       _error) {
+    _error_display(
+      _error);
     _msg_error(
       "Contract deployment failed.",
       0);
-    _error_handle(
-      error)
-    throw error;
+    throw _error;
   };
 }
 
