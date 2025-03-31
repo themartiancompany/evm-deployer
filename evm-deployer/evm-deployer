@@ -43,22 +43,14 @@ _sourced \
 _global_variables() {
   deploy_date=""
   target_contracts=()
-  wallet_path=""
-  wallet_password=""
-  wallet_seed=""
-  wallet_address=""
-  target_network=""
-  rpc_selection=""
+  libevm_global_variables
+  libevm_app_global_variables
   contract_abi=""
   contract_bytecode=""
   contract_compiler_output=""
   compiler_backend=""
   evm_version=""
   solc_version=""
-  api_key=""
-  wallet_name=""
-  retries_max=""
-  call_timeout=""
   cache_dir=""
   contract_output_file=""
   tx_deployment_output_file=""
@@ -302,10 +294,6 @@ _set_overrides() {
     "dir" \
     "${HOME}/.cache/${app_name}"
   _set_override \
-    "wallet" \
-    "name" \
-    "default"
-  _set_override \
     "target" \
     "network" \
     "Gnosis"
@@ -315,29 +303,10 @@ _set_overrides() {
     "kirsh"
   _api_key_auto_detect \
     "${target_network}"
-  _set_override \
-    "wallet" \
-    "path" \
-    "$(_wallet_path_get \
-         "evm-wallet" \
-         "${wallet_name}")"
-  _secret_auto_detect \
-    "seed" \
-    "seed" \
+  _wallet_overrides_set \
     "evm-wallet" \
-    "${wallet_name}"
-  _secret_auto_detect \
-    "password" \
-    "plain" \
-    "evm-wallet" \
-    "${wallet_name}"
-  _set_override \
-    "wallet" \
-    "address" \
-    "$(evm-wallet \
-         get \
-           "${wallet_name}" \
-           "address")"
+    "default" \
+    "y"
   _set_override \
     "compiler" \
     "backend" \
