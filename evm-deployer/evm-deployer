@@ -239,7 +239,7 @@ _output_dir_default_setup() {
         -u \
         -d \
         -p \
-          "${_contract_dir}")"
+          "${_network_dir}")"
     mkdir \
       -p \
       "${output_dir}"
