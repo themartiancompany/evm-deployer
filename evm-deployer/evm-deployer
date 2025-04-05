@@ -43,8 +43,6 @@ _sourced \
 _global_variables() {
   deploy_date=""
   target_contracts=()
-  libevm_global_variables
-  libevm_app_global_variables
   contract_abi=""
   contract_bytecode=""
   contract_compiler_output=""
@@ -54,6 +52,7 @@ _global_variables() {
   cache_dir=""
   contract_output_file=""
   tx_deployment_output_file=""
+  index_publish=""
   color=""
   quiet=""
 }
@@ -61,6 +60,9 @@ _global_variables() {
 _requirements() {
   _check_cmd \
     'evm-chains-info'
+  _check_cmd \
+    'evm-contract-source-publish' \
+    'evm-contracts-source-index'
   _check_cmd \
     'evm-wallet'
   _check_cmd \
@@ -107,9 +109,10 @@ _evm_deployer() {
     _evm_version="${12}" \
     _retries_max="${13}" \
     _call_timeout="${14}" \
-    _cache_dir="${15}" \
-    _contract_output_file="${16}" \
-    _tx_deployment_output_file="${17}" \
+    _index_publish="${15}" \
+    _cache_dir="${16}" \
+    _contract_output_file="${17}" \
+    _tx_deployment_output_file="${18}" \
     _target_contracts=() \
     _node_run_opts=() \
     _contract_filename \
@@ -120,7 +123,7 @@ _evm_deployer() {
     _rpc_backend \
     _bytecode_dir
   shift \
-    17
+    18
   _target_contracts+=(
     "$@"
   )
@@ -188,6 +191,12 @@ _evm_deployer() {
     "${_node_run_opts[@]}" \
     "${_cmd}" \
     "${_args[@]}"
+  # TODO: tomorrow
+  # if [[ "${_index_publish}" == "y" ]]; then
+  #   evm-contract-source-publish \
+  #     "${_evm_contract_source_publish_opts[@]}" \
+  #     "${_target_contract}"
+  # fi
 }
 
 _contract_bytecode_auto_detect() {
@@ -296,7 +305,7 @@ _set_overrides() {
   _set_override \
     "target" \
     "network" \
-    "Gnosis"
+    "100"
   _set_override \
     "rpc" \
     "selection" \
@@ -327,6 +336,10 @@ _set_overrides() {
     "call" \
     "timeout" \
     "300000"
+  _set_override \
+    "index" \
+    "publish" \
+    "y"
   if [[ "${target_contracts[*]}" != "" ]]; then
     _set_override \
       "contract" \
@@ -371,18 +384,6 @@ Usage:
     see which with "evm-chains-info"
 
   options:
-     -w <wallet_path>                Wallet path.
-                                     Default: ${wallet_path}
-     -p <wallet_password>            Wallet password.
-                                     Default: ${wallet_password}
-     -s <wallet_seed>                Wallet seed path.
-                                     Default: ${wallet_seed}
-     -n <network>                    EVM network name.
-                                     Default: ${target_network}
-     -R <rpc_selection>              RPC selection method.
-                                     Default: ${rpc_selection}
-     -k <api_key>                    Etherscan-like service key.
-                                     Default: ${api_key}
      -A <contract_abi>               Contract ABI.
                                      Default: ${contract_abi}
      -B <contract_bytecode>          Contract bytecode.
@@ -401,8 +402,8 @@ Usage:
      -T <call_timeout>               Maximum number of milliseconds before
                                      declaring the call failed.
                                      Default: ${call_timeout}
-     -W <cache_dir>                  Work directory.
-                                     Default: ${cache_dir}
+     -R <rpc_selection>              RPC selection method.
+                                     Default: ${rpc_selection}
      -o <contract_output_file>       Where to save a JSON representing
                                      the contract object resulting from
                                      the deployment.
@@ -411,6 +412,29 @@ Usage:
                                      the transaction object resulting from
                                      the deployment.
                                      Default: ${tx_deployment_output_file}
+     -P                              Publishes the contract's source
+                                     on the on-chain, network-neutral,
+                                     network-independent, uncensorable
+                                     EVM Contracts Source Index.
+                                     Default: ${index_publish}
+
+  credentials options:
+     -N <wallet_name>                EVM wallet name.
+                                     Default: ${wallet_name}
+     -w <wallet_path>                EVM wallet file path.
+                                     Default: ${wallet_path}
+     -p <wallet_path>                EVM wallet password file.
+                                     Default: ${wallet_password}
+     -s <wallet_seed>                EVM wallet seed file.
+                                     Default: ${wallet_seed}
+     -k <api_key>                    Etherscan-like service key.
+                                     Default: ${api_key}
+
+  libEVM options:
+     -n <network>                    EVM network name.
+                                     Default: ${target_network}
+     -W <cache_dir>                  Work directory.
+                                     Default: ${cache_dir}
 
      -h                              This message.
      -c                              Enable color output
@@ -423,29 +447,10 @@ ENDUSAGETEXT
     "${1}"
 }
 
-_display_flags() {
-  local \
-    _flags=(
-      "${1}"
-    ) \
-    _flag
-  for _flag \
-    in "${_flags[@]}"; do
-  _msg_info \
-    "                             ${_flag}"
-  done
-}
-
 # Shows configuration options.
 _show_config() {
   _msg_info "${app_name} configuration"
   _msg_info "                       Deploy date:   ${deploy_date}"
-  _msg_info "                       Wallet path:   ${wallet_path}"
-  _msg_info "                   Wallet password:   ${wallet_password}"
-  _msg_info "                       Wallet seed:   ${wallet_seed}"
-  _msg_info "                    Target network:   ${target_network}"
-  _msg_info "              RPC selection method:   ${rpc_selection}"
-  _msg_info "                           API key:   ${api_key}"
   _msg_info "                      Contract ABI:   ${contract_abi}"
   _msg_info "                 Contract bytecode:   ${contract_bytecode}"
   _msg_info "          Contract compiler output:   ${contract_compiler_output}"
@@ -453,62 +458,99 @@ _show_config() {
   _msg_info "                       EVM version:   ${evm_version}"
   _msg_info "                  Compiler backend:   ${compiler_backend}"
   _msg_info "                   Maximum retries:   ${retries_max}"
-  _msg_info "                   Cache directory:   ${cache_dir}"
+  _msg_info "              RPC selection method:   ${rpc_selection}"
+  _msg_info "               Publish source code:   ${index_publish}"
   _msg_info "              Contract output file:   ${contract_output_file}"
   _msg_info "Deployment transaction output file:   ${tx_deployment_output_file}"
   _msg_info "                  Target contracts:   ${target_contracts[*]}"
+  _msg_info "                  LibEVM options:"
+  _msg_info "                    Target network:   ${target_network}"
+  _msg_info "             Credentials options:"
+  _msg_info "                       Wallet name:   ${wallet_name}"
+  _msg_info "                       Wallet path:   ${wallet_path}"
+  _msg_info "                   Wallet password:   ${wallet_password}"
+  _msg_info "                       Wallet seed:   ${wallet_seed}"
+  _msg_info "                           API key:   ${api_key}"
+  _msg_info "             Credentials options:"
+  _msg_info "                   Cache directory:   ${cache_dir}"
 }
 
 _globals
 _global_variables
 _requirements
+_libevm_global_variables
+_libevm_app_global_variables
 _config_user_init \
   "${app_name}"
 # shellcheck disable=SC2034
+getopts_opts="$( \
+  printf \
+    "%s" \
+    "R:o:r:x:b:e:C:T:P:" \
+    "A:B:O:" \
+    "$(_libevm_app_getopts_params_get)" \
+    "n:" \
+    "$(_wallet_getopts_params_get)" \
+    "cvh")"
 while \
   getopts \
-    'w:p:s:n:R:k:b:C:e:A:B:O:r:T:W:o:x:cvh?' \
+    "${getopts_opts}" \
     arg; do
+  _wallet_getopts_case
+  _libevm_app_getopts_case
   case \
     "${arg}" in
-    w) override_wallet_path="${OPTARG}" ;;
-    p) override_wallet_password="${OPTARG}" ;;
-    s) override_wallet_seed="${OPTARG}" ;;
-    n) override_target_network="${OPTARG}" ;;
-    R) override_rpc_selection="${OPTARG}" ;;
-    k) override_api_key="${OPTARG}" ;;
-    b) override_compiler_backend="${OPTARG}" ;;
-    C) override_solc_version="${OPTARG}" ;;
-    e) override_evm_version="${OPTARG}" ;;
-    A) override_contract_abi="${OPTARG}" ;;
-    B) override_contract_bytecode="${OPTARG}" ;;
-    O) override_contract_compiler_output="${OPTARG}" ;;
-    r) override_retries_max="${OPTARG}" ;;
-    T) override_call_timeout="${OPTARG}" ;;
-    W) override_cache_dir="${OPTARG}" ;;
-    o) override_contract_output_file="${OPTARG}" ;;
-    x) override_tx_deployment_output_file="${OPTARG}" ;;
-    c) override_color="y" ;;
-    v) override_quiet="n" ;;
-    h|?) _set_overrides && \
-         _usage \
-           0 ;;
-    *)
-    _msg_error \
-      "Invalid argument '${arg}'" \
-      0
-    _usage \
-      1
-    ;;
+    R) \
+      override_rpc_selection="${OPTARG}" ;;
+    o) \
+      override_contract_output_file="${OPTARG}" ;;
+    r) \
+      override_retries_max="${OPTARG}" ;;
+    x) \
+      override_tx_deployment_output_file="${OPTARG}" ;;
+    b) \
+      override_compiler_backend="${OPTARG}" ;;
+    e) \
+      override_evm_version="${OPTARG}" ;;
+    C) \
+      override_solc_version="${OPTARG}" ;;
+    T) \
+      override_call_timeout="${OPTARG}" ;;
+    A) \
+      override_contract_abi="${OPTARG}" ;;
+    B) \
+      override_contract_bytecode="${OPTARG}" ;;
+    O) \
+      override_contract_compiler_output="${OPTARG}" ;;
+    n) \
+      override_target_network="${OPTARG}" ;;
+    W) \
+      override_cache_dir="${OPTARG}" ;;
+    c) \
+      override_color="y" ;;
+    v) \
+      override_quiet="n" ;;
+    h) \
+      _set_overrides && \
+      _usage \
+        0 ;;
+    *) \
+      if [[ " ${getopts_opts} " != *"${arg}"* ]]; then
+        _msg_error \
+          "Invalid argument '${arg}'." \
+          0
+        _usage \
+          1
+      fi ;;
   esac
 done
 shift \
   $(( \
     OPTIND - 1 \
   ))
-if (( 0 == $# )); then
+if (( 0 == "$#" )); then
   _msg_error \
-    "No contracts given." \
+    "No contract file specified." \
     1
 fi
 target_contracts+=(
@@ -530,6 +572,7 @@ app_opts=(
   "${solc_version}"
   "${evm_version}"
   "${retries_max}"
+  "${index_publish}"
   "${call_timeout}"
   "${cache_dir}"
   "${contract_output_file}"
