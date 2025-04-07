@@ -66,6 +66,8 @@ _requirements() {
   _check_cmd \
     'evm-wallet'
   _check_cmd \
+    'jq'
+  _check_cmd \
     'node-run'
   _check_cmd \
     'solidity-compiler'
@@ -81,16 +83,133 @@ _get_conf_dir_path() {
 
 _bytecode_dir_setup() {
   local \
-    _contract_dir
+    _target_contract="${1}" \
+    _contract_name="${2}" \
+    _contract_filename="${3}" \
+    _target_network="${4}" \
+    _contract_dir \
+    _contract_hash
   _contract_hash="$( \
     _file_hash \
-      "${target_contracts[0]}")"
+      "${_target_contract}")"
   _contract_dir="${_cache_dir}/${_contract_filename}/${_contract_hash}"
-  _output_dir="${_contract_dir}/${target_network}/build"
+  _output_dir="${_contract_dir}/${_target_network}/build"
   _bytecode_dir="$( \
     mktemp \
       -p \
       "${_output_dir}")"
+  _compiler_output_dir="${_bytecode_dir}/contracts/${_contract_name}.sol"
+}
+
+_contract_build() {
+  local \
+    _target_contract="${1}" \
+    _target_network="${2}" \
+    _compiler_backend="${3}" \
+    _solc_version="${4}" \
+    _evm_version="${5}" \
+    _solidity_compiler_opts=() \
+    _contract_filename \
+    _contract_name \
+    _compiler_output_dir \
+    _bytecode_dir
+  if [[ "${quiet}" == "n" ]]; then
+    _solidity_compiler_opts+=(
+      -v
+    )
+  fi
+  _contract_filename="$( \
+    basename \
+      "${_target_contract}")"
+  _contract_name="${_contract_filename%%.*}"
+  _bytecode_dir_setup \
+    "${_target_contract}" \
+    "${_contract_name}" \
+    "${_contract_filename}" \
+    "${_target_network}"
+  _solidity_compiler_opts+=(
+    -o
+      "${_bytecode_dir}"
+  )
+  if [[ "${_compiler_backend}" != "" ]]; then
+    _solidity_compiler_opts+=(
+      -b
+        "${_compiler_backend}"
+    )
+  fi
+  if [[ "${_solc_version}" != "" ]]; then
+    _solidity_compiler_opts+=(
+      -C
+        "${_solc_version}"
+    )
+  fi
+  if [[ "${_evm_version}" != "" ]]; then
+    _solidity_compiler_opts+=(
+      -e
+        "${_evm_version}"
+    )
+  fi
+  solidity-compiler \
+    "${_solidity_compiler_opts[@]}" \
+    "${_target_contract}"
+  if [[ "${_compiler_backend}" == "solc" ]]; then
+    _contract_abi="${_bytecode_dir}/${_contract_name}.abi.json"
+    _contract_bytecode="${_bytecode_dir}/${_contract_name}.bin"
+  fi
+  if [[ "${_compiler_backend}" == "hardhat" ]]; then
+    _contract_compiler_output="${_compiler_output_dir}/${_contract_name}.json"
+  fi
+}
+
+_contract_index_publish() {
+  local \
+    _target_contract="${1}" \
+    _target_network="${2}" \
+    _solc_version="${3}" \
+    _evm_version="${4}" \
+    _contract_output_file="${5}" \
+    _tx_deployment_output_file="${6}" \
+    _evm_contract_publish_opts=() \
+    _jq_opts=() \
+    _msg=() \
+    _contract_address \
+    _tx_deployment
+  if [[ "${quiet}" == "n" ]]; then
+    _evm_contract_source_publish_opts+=(
+      -v
+    )
+  fi
+  _jq_opts+=(
+    --raw-output
+  )
+  _contract_address="$( \
+    cat \
+      "${_contract_output_file}" | \
+      jq \
+        "${_jq_opts[@]}" \
+        ".target")"
+  _tx_deployment="$( \
+    cat \
+      "${_tx_deployment_output_file}" | \
+      jq \
+        "${_jq_opts[@]}" \
+        ".hash")"
+  _msg=(
+    "Publishing contract '${_target_contract}'"
+    "on the on-chain Ethereum"
+    "Virtual Machine Contracts' Source Index."
+  )
+  _msg_info \
+    "${_msg[*]}"
+  evm-contract-source-publish \
+    "${_evm_contract_source_publish_opts[@]}" \
+    "${_target_network}" \
+    "${_contract_address}" \
+    "${_target_contract}" \
+    "${_tx_deployment}" \
+    "${_evm_version}" \
+    "solc" \
+    "${_solc_version}"
 }
 
 _evm_deployer() {
@@ -98,7 +217,7 @@ _evm_deployer() {
     _wallet_path="${1}" \
     _wallet_password="${2}" \
     _wallet_seed="${3}" \
-    _network="${4}" \
+    _target_network="${4}" \
     _rpc_selection="${5}" \
     _api_key_path="${6}" \
     _contract_abi_path="${7}" \
@@ -113,90 +232,76 @@ _evm_deployer() {
     _cache_dir="${16}" \
     _contract_output_file="${17}" \
     _tx_deployment_output_file="${18}" \
+    _contract \
     _target_contracts=() \
     _node_run_opts=() \
-    _contract_filename \
-    _contract_name \
-    _contract_hash \
-    _cmd \
-    _args=() \
-    _rpc_backend \
-    _bytecode_dir
+    _deployer \
+    _deployer_args=() \
+    _rpc_backend
   shift \
     18
   _target_contracts+=(
     "$@"
   )
+  if [[ "${quiet}" == "n" ]]; then
+    _evm_contract_source_publish_opts+=(
+      -v
+    )
+    _node_run_opts+=(
+      -v
+    )
+  fi
   _node_run_opts+=(
     -r
       "${_retries_max}"
   )
-  _cmd="$( \
+  _deployer="$( \
     _get_lib)/${app_name}/deployer"
   _rpc_backend_get \
-    "${_network}" \
+    "${_target_network}" \
     "${_rpc_selection}"
-  if [[ "${_contract_bytecode_path}" == "" && \
-        "${_contract_compiler_output_path}" == "" ]]; then
-    _contract_filename="$( \
-      basename \
-        "${_target_contracts}")"
-    _contract_name="${_contract_filename%%.*}"
-    _bytecode_dir_setup
-    _solidity_compiler_opts+=(
-      -o
-        "${_bytecode_dir}"
+  for _contract in "${_target_contracts[@]}"; do
+    if [[ "${_contract_bytecode_path}" == "" && \
+          "${_contract_compiler_output_path}" == "" ]]; then
+      _contract_build \
+        "${_contract}" \
+        "${_compiler_backend}" \
+        "${_solc_version}" \
+        "${_evm_version}"
+    fi
+    _deployer_args+=(
+      "${quiet}"
+      "${_retries_max}"
+      "${_call_timeout}"
+      "${_wallet_seed}"
+      "${_contract_abi_path}"
+      "${_contract_bytecode_path}"
+      "${_contract_compiler_output_path}"
+      "${_rpc_backend}"
+      "${_api_key_path}"
+      "${_contract_output_file}"
+      "${_tx_deployment_output_file}"
     )
-    if [[ "${_compiler_backend}" != "" ]]; then
-      _solidity_compiler_opts+=(
-        -b
-          "${_compiler_backend}"
-      )
+    _msg=(
+      "Running '$(basename "${_cmd}")'"
+      "with options '${_args[*]}'."
+    )
+    _msg_info \
+      "${_msg[*]}"
+    node-run \
+      "${_node_run_opts[@]}" \
+      "${_deployer}" \
+      "${_deployer_args[@]}"
+    if [[ "${_index_publish}" == "y" ]]; then
+      _contract_index_publish \
+        "${_contract}" \
+        "${_target_network}" \
+        "${_solc_version}" \
+        "${_evm_version}" \
+        "${_contract_output_file}" \
+        "${_tx_deployment_output_file}"
     fi
-    if [[ "${_solc_version}" != "" ]]; then
-      _solidity_compiler_opts+=(
-        -C
-          "${_solc_version}"
-      )
-    fi
-    if [[ "${_evm_version}" != "" ]]; then
-      _solidity_compiler_opts+=(
-        -e
-          "${_evm_version}"
-      )
-    fi
-    solidity-compiler \
-      "${_solidity_compiler_opts[@]}" \
-      "${_target_contracts[@]}"
-    _contract_abi="${_bytecode_dir}/${_contract_name}.abi.json"
-    _contract_bytecode="${_bytecode_dir}/${_contract_name}.bin"
-    _contract_compiler_output="${_bytecode_dir}/contracts/${_contract_name}.sol/${_contract_name}.json"
-  fi
-  _args+=(
-    "${quiet}"
-    "${_retries_max}"
-    "${_call_timeout}"
-    "${_wallet_seed}"
-    "${_contract_abi_path}"
-    "${_contract_bytecode_path}"
-    "${_contract_compiler_output_path}"
-    "${_rpc_backend}"
-    "${_api_key_path}"
-    "${_contract_output_file}"
-    "${_tx_deployment_output_file}"
-  )
-  _msg_info \
-    "Running '$(basename "${_cmd}")' with options '${_args[*]}'."
-  node-run \
-    "${_node_run_opts[@]}" \
-    "${_cmd}" \
-    "${_args[@]}"
-  # TODO: tomorrow
-  # if [[ "${_index_publish}" == "y" ]]; then
-  #   evm-contract-source-publish \
-  #     "${_evm_contract_source_publish_opts[@]}" \
-  #     "${_target_contract}"
-  # fi
+  done
 }
 
 _contract_bytecode_auto_detect() {
@@ -233,7 +338,8 @@ _output_dir_default_setup() {
     _output_file \
     _contract_name \
     _contract_dir \
-    _network_dir
+    _network_dir \
+    _contract_hash
   if [[ ! -v "output_dir" ]]; then
     _contract_name="$( \
       basename \
@@ -339,7 +445,7 @@ _set_overrides() {
   _set_override \
     "index" \
     "publish" \
-    "y"
+    "n"
   if [[ "${target_contracts[*]}" != "" ]]; then
     _set_override \
       "contract" \
@@ -371,7 +477,7 @@ _usage() {
       -d '' \
       _usage_text << \
         ENDUSAGETEXT || true
-EVM network deployer
+Ethereum Virtual Machine compatible blockchain network contract deployer.
 
 Usage:
   ${app_name}
@@ -433,6 +539,8 @@ Usage:
   libEVM options:
      -n <network>                    EVM network name.
                                      Default: ${target_network}
+
+  application options:
      -W <cache_dir>                  Work directory.
                                      Default: ${cache_dir}
 
@@ -486,7 +594,7 @@ _config_user_init \
 getopts_opts="$( \
   printf \
     "%s" \
-    "R:o:r:x:b:e:C:T:P:" \
+    "R:o:r:x:b:e:C:T:P" \
     "A:B:O:" \
     "$(_libevm_app_getopts_params_get)" \
     "n:" \
@@ -516,6 +624,8 @@ while \
       override_solc_version="${OPTARG}" ;;
     T) \
       override_call_timeout="${OPTARG}" ;;
+    P) \
+      override_index_publish="y" ;;
     A) \
       override_contract_abi="${OPTARG}" ;;
     B) \
@@ -572,8 +682,8 @@ app_opts=(
   "${solc_version}"
   "${evm_version}"
   "${retries_max}"
-  "${index_publish}"
   "${call_timeout}"
+  "${index_publish}"
   "${cache_dir}"
   "${contract_output_file}"
   "${tx_deployment_output_file}"

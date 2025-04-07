@@ -26,9 +26,9 @@
 evm-deployer
 ==============
 
------------------------------------------------------------
-Ethereum Virtual Machine Soldity smart contracts deployer
------------------------------------------------------------
+--------------------------------------------------------------------------------
+Ethereum Virtual Machine compatible networks Solidity smart contracts deployer
+--------------------------------------------------------------------------------
 :Version: evm-deployer |version|
 :Manual section: 1
 
@@ -43,8 +43,17 @@ Description
 Solidity smart contracts deployer for Ethereum
 Virtual Machine (EVM) compatible blockchain networks
 written with the EVM toolchain.
+
 It tightly integrates with EVM Wallet and EVM
 Contracts Tools.
+
+The deployer supports directly building the input
+sources as well as publishing them on the
+cross-network, network-neutral,
+on-chain EVM Contracts' Source Index.
+
+No silly per-network explorer verification
+anymore.
 
 Networks
 ========
@@ -55,26 +64,55 @@ consulted using *evm-chains-info*.
 Options
 =======
 
+-A contract_abi                 Contract ABI. Specify only when
+                                deploying a single contract.
+-B contract_bytecode            Contract bytecode. Specify only
+                                when deploying a single contract.
+-O contract_compiler_output     Contract compiler output. Specify
+                                only when deploying a single contract.
+-b compiler_backend             It can be 'solc' or 'hardhat'.
+                                It will be the same for all the
+                                input contracts.
+-C solc_version                 Solc version. It will be the same
+                                for all input contracts.
+-e evm_version                  EVM version. It will be the same
+                                for all input contracts.
+-r retries_max                  Maximum number of retries before
+                                failing.
+-T call_timeout                 Maximum number of milliseconds before
+                                declaring the deploying failed.
+-R rpc_selection                Target network RPC selection method.
+-o contract_output_file         Where to save a JSON representing
+                                the contract object resulting from
+                                the deployment. Specify only when
+                                deploying a single contract.
+-x tx_deployment_output_file    Where to save a JSON representing
+                                the transaction object resulting from
+                                the deployment. Specify only when
+                                deploying a single contract.
+-P                              Publishes the contract's source
+                                on the on-chain, network-neutral,
+                                network-independent, uncensorable
+                                EVM Contracts Source Index.
+
+Credentials options
+=====================
+
+-N wallet_name                  EVM wallet name.
 -w wallet_path                  Wallet path.
 -p wallet_password              Wallet password.
 -s wallet_seed                  Wallet seed path.
--n network                      EVM network name.
--R rpc_selection                RPC selection method.
 -k api_key                      Etherscan-like service key.
--A contract_abi                 Contract ABI.
--B contract_bytecode            Contract bytecode.
--O contract_compiler_output     Contract compiler output.
--b compiler_backend             It can be 'solc' or 'hardhat'.
--C solc_version                 Solc version.
--e evm_version                  EVM version.
--r retries_max                  Maximum number of retries before
-                                failing.
--T call_timeout                 Maximum number of seconds before
-                                declaring the call failed.
+
+LibEVM options
+===================
+
+-n network                      EVM network name.
+
+Application options
+=====================
+
 -W cache_dir                    Work directory.
--o output_file                  Where to save a JSON representing
-                                the contract object resulting from
-                                the deployment.
 
 -h                              Display help.
 -c                              Enable color output.
