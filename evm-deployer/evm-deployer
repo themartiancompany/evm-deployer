@@ -283,8 +283,8 @@ _evm_deployer() {
       "${_tx_deployment_output_file}"
     )
     _msg=(
-      "Running '$(basename "${_cmd}")'"
-      "with options '${_args[*]}'."
+      "Running '$(basename "${_deployer}")'"
+      "with options '${_deployer_args[*]}'."
     )
     _msg_info \
       "${_msg[*]}"
