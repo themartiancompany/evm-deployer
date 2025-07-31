@@ -277,7 +277,9 @@ async function
       if ( _contract == undefined ) {
         _msg_error_deployment_undefined(
           _attempt);
-        throw "Contract undefined, error deploying."
+        throw { "error": {
+                  "message":
+                    "Contract undefined, error deploying." } };
       }
       else if ( _contract != undefined ) {
         // _tx_deployment =
@@ -328,7 +330,9 @@ async function
     }
   }
   if ( _attempt > _retries_max ) {
-    throw "Maximum number of retries reached.";
+    throw { "error": {
+	      "message":
+	        "Maximum number of retries reached." } };
   }
   _return = [
     _contract_sanitized,
