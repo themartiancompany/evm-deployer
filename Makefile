@@ -8,6 +8,17 @@ BIN_DIR=$(DESTDIR)$(PREFIX)/bin
 LIB_DIR=$(DESTDIR)$(PREFIX)/lib/$(_PROJECT)
 MAN_DIR?=$(DESTDIR)$(PREFIX)/share/man
 
+_INSTALL_FILE=\
+  install \
+    -vDm644
+_INSTALL_DIR=\
+  install \
+    -vdm755
+_INSTALL_EXE=\
+  install \
+    -vDm755
+
+
 DOC_FILES=$(wildcard *.rst)
 SCRIPT_FILES=$(wildcard $(_PROJECT)/*)
 
@@ -22,17 +33,23 @@ install: install-scripts install-doc install-man
 
 install-scripts:
 
-	install -vDm 755 "$(_PROJECT)/$(_PROJECT)" "$(BIN_DIR)/$(_PROJECT)"
-	install -vDm 755 "$(_PROJECT)/deployer" "$(LIB_DIR)/deployer"
+	$(_INSTALL_EXE) \
+	  "$(_PROJECT)/$(_PROJECT)" \
+	  "$(BIN_DIR)/$(_PROJECT)"
+	$(_INSTALL_EXE) \
+	  "$(_PROJECT)/deployer" \
+	  "$(LIB_DIR)/deployer"
 
 install-doc:
 
-	install -vDm 644 $(DOC_FILES) -t $(DOC_DIR)
+	$(_INSTALL_FILE) \
+	  $(DOC_FILES) \
+	  -t \
+	  $(DOC_DIR)
 
 install-man:
 
-	install \
-	  -vdm755 \
+	$(_INSTALL_DIR) \
 	  "$(MAN_DIR)/man1"
 	rst2man \
 	  "man/$(_PROJECT).1.rst" \
