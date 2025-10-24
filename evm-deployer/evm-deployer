@@ -96,8 +96,12 @@ _bytecode_dir_setup() {
   _output_dir="${_contract_dir}/${_target_network}/build"
   _bytecode_dir="$( \
     mktemp \
+      -u \
       -p \
-      "${_output_dir}")"
+        "${_output_dir}")"
+  mkdir \
+    -p \
+    "${_bytecode_dir}"
   _compiler_output_dir="${_bytecode_dir}/contracts/${_contract_name}.sol"
 }
 
