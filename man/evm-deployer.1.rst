@@ -64,24 +64,6 @@ consulted using *evm-chains-info*.
 Options
 =======
 
--A contract_abi                 Contract ABI. Specify only when
-                                deploying a single contract.
--B contract_bytecode            Contract bytecode. Specify only
-                                when deploying a single contract.
--O contract_compiler_output     Contract compiler output. Specify
-                                only when deploying a single contract.
--b compiler_backend             It can be 'solc' or 'hardhat'.
-                                It will be the same for all the
-                                input contracts.
--C solc_version                 Solc version. It will be the same
-                                for all input contracts.
--e evm_version                  EVM version. It will be the same
-                                for all input contracts.
--r retries_max                  Maximum number of retries before
-                                failing.
--T call_timeout                 Maximum number of milliseconds before
-                                declaring the deploying failed.
--R rpc_selection                Target network RPC selection method.
 -o contract_output_file         Where to save a JSON representing
                                 the contract object resulting from
                                 the deployment. Specify only when
@@ -94,6 +76,29 @@ Options
                                 on the on-chain, network-neutral,
                                 network-independent, uncensorable
                                 EVM Contracts Source Index.
+
+
+Contract options
+=================
+-A contract_abi                 Contract ABI. Specify only when
+                                deploying a single contract.
+-B contract_bytecode            Contract bytecode. Specify only
+                                when deploying a single contract.
+-O contract_compiler_output     Contract compiler output. Specify
+                                only when deploying a single contract.
+
+
+Compiler options
+==================
+
+-b compiler_backend             It can be 'solc' or 'hardhat'.
+                                It will be the same for all the
+                                input contracts.
+-C solc_version                 Solc version. It will be the same
+                                for all input contracts.
+-e evm_version                  EVM version. It will be the same
+                                for all input contracts.
+
 
 Credentials options
 =====================
@@ -108,6 +113,12 @@ LibEVM options
 ===================
 
 -n network                      EVM network name.
+-r retries_max                  Maximum number of retries before
+                                failing.
+-T call_timeout                 Maximum number of milliseconds before
+                                declaring the deploying failed.
+-R rpc_selection                Target network RPC selection method.
+
 
 Application options
 =====================

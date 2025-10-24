@@ -490,26 +490,6 @@ Usage:
     see which with "evm-chains-info"
 
   options:
-     -A <contract_abi>               Contract ABI.
-                                     Default: ${contract_abi}
-     -B <contract_bytecode>          Contract bytecode.
-                                     Default: ${contract_bytecode}
-     -O <contract_compiler_output>   Contract compiler output.
-                                     Default: ${contract_compiler_output}
-     -b <compiler_backend>           It can be 'solc' or 'hardhat'.
-                                     Default: ${compiler_backend}
-     -C <solc_version>               Solc version.
-                                     Default: ${solc_version}
-     -e <evm_version>                EVM version.
-                                     Default: ${evm_version}
-     -r <retries_max>                Maximum number of retries before
-                                     failing.
-                                     Default: ${retries_max}
-     -T <call_timeout>               Maximum number of milliseconds before
-                                     declaring the call failed.
-                                     Default: ${call_timeout}
-     -R <rpc_selection>              RPC selection method.
-                                     Default: ${rpc_selection}
      -o <contract_output_file>       Where to save a JSON representing
                                      the contract object resulting from
                                      the deployment.
@@ -523,6 +503,22 @@ Usage:
                                      network-independent, uncensorable
                                      EVM Contracts Source Index.
                                      Default: ${index_publish}
+
+  compiler options:
+     -b <compiler_backend>           It can be 'solc' or 'hardhat'.
+                                     Default: ${compiler_backend}
+     -C <solc_version>               Solc version.
+                                     Default: ${solc_version}
+     -e <evm_version>                EVM version.
+                                     Default: ${evm_version}
+
+  contract options:
+     -A <contract_abi>               Contract ABI.
+                                     Default: ${contract_abi}
+     -B <contract_bytecode>          Contract bytecode.
+                                     Default: ${contract_bytecode}
+     -O <contract_compiler_output>   Contract compiler output.
+                                     Default: ${contract_compiler_output}
 
   credentials options:
      -N <wallet_name>                EVM wallet name.
@@ -539,6 +535,14 @@ Usage:
   libEVM options:
      -n <network>                    EVM network name.
                                      Default: ${target_network}
+     -r <retries_max>                Maximum number of retries before
+                                     failing.
+                                     Default: ${retries_max}
+     -T <call_timeout>               Maximum number of milliseconds before
+                                     declaring the call failed.
+                                     Default: ${call_timeout}
+     -R <rpc_selection>              RPC selection method.
+                                     Default: ${rpc_selection}
 
   application options:
      -W <cache_dir>                  Work directory.
