@@ -265,6 +265,7 @@ _evm_deployer() {
           "${_contract_compiler_output_path}" == "" ]]; then
       _contract_build \
         "${_contract}" \
+        "${_target_network}" \
         "${_compiler_backend}" \
         "${_solc_version}" \
         "${_evm_version}"
