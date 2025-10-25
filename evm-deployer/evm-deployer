@@ -157,11 +157,11 @@ _contract_build() {
     "${_solidity_compiler_opts[@]}" \
     "${_target_contract}"
   if [[ "${_compiler_backend}" == "solc" ]]; then
-    _contract_abi="${_bytecode_dir}/${_contract_name}.abi.json"
-    _contract_bytecode="${_bytecode_dir}/${_contract_name}.bin"
+    _contract_abi_path="${_bytecode_dir}/${_contract_name}.abi.json"
+    _contract_bytecode_path="${_bytecode_dir}/${_contract_name}.bin"
   fi
   if [[ "${_compiler_backend}" == "hardhat" ]]; then
-    _contract_compiler_output="${_compiler_output_dir}/${_contract_name}.json"
+    _contract_compiler_output_path="${_compiler_output_dir}/${_contract_name}.json"
   fi
 }
 
