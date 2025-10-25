@@ -426,6 +426,21 @@ _tx_deployment_output_file_auto_detect() {
     "${_output_file}"
 }
 
+_taget_files_check() {
+  local \
+    _file \
+    _msg=()
+  for _file in "${target_files[@]}"; do
+    if [[ ! -e "${_file}" ]]; then
+      _msg=(
+        "File '${_file}' does not exist."
+      )
+      _msg_error \
+        "${_msg[*]}" \
+        1
+    fi
+  done
+}
 
 _set_overrides() {
   if [[ -v override_quiet ]]; then
@@ -497,6 +512,7 @@ _set_overrides() {
     _contract_output_file_auto_detect
     _tx_deployment_output_file_auto_detect
   fi
+  _target_files_check
 }
 
 # Show help usage, with an exit status.
@@ -701,8 +717,11 @@ shift \
     OPTIND - 1 \
   ))
 if (( 0 == "$#" )); then
+  _msg=(
+    "No contract file specified."
+  )
   _msg_error \
-    "No contract file specified." \
+    "${_msg[*]}" \
     1
 fi
 target_contracts+=(
