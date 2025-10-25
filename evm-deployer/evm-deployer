@@ -216,6 +216,36 @@ _contract_index_publish() {
     "${_solc_version}"
 }
 
+_contract_bytecode_check() {
+  if [[ "${_contract_bytecode}" != "" ]]; then
+    if [[ ! -e "${_contract_bytecode}" ]]; then
+      _msg=(
+        "Contract bytecode file"
+        "'${_contract_bytecode}'"
+        "does not exist."
+      )
+      _msg_error \
+        "${_msg[*]}" \
+        1
+    fi
+  fi
+}
+
+_contract_compiler_output_check() {
+  if [[ "${_contract_compiler_output}" != "" ]]; then
+    if [[ ! -e "${_contract_compiler_output}" ]]; then
+      _msg=(
+        "Contract compiler output file"
+        "'${_contract_compiler_output_file}'"
+        "does not exist."
+      )
+      _msg_error \
+        "${_msg[*]}" \
+        1
+    fi
+  fi
+}
+
 _evm_deployer() {
   local \
     _wallet_path="${1}" \
@@ -273,6 +303,9 @@ _evm_deployer() {
         "${_compiler_backend}" \
         "${_solc_version}" \
         "${_evm_version}"
+    else
+      _contract_compiler_output_check
+      _contract_bytecode_check
     fi
     _deployer_args+=(
       "${quiet}"
