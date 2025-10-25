@@ -426,7 +426,7 @@ _tx_deployment_output_file_auto_detect() {
     "${_output_file}"
 }
 
-_taget_files_check() {
+_target_files_check() {
   local \
     _file \
     _msg=()
@@ -453,6 +453,7 @@ _set_overrides() {
   elif [[ -z "${color}" ]]; then
     color="n"
   fi
+  _target_files_check
   _set_override \
     "deploy" \
     "date" \
@@ -512,7 +513,6 @@ _set_overrides() {
     _contract_output_file_auto_detect
     _tx_deployment_output_file_auto_detect
   fi
-  _target_files_check
 }
 
 # Show help usage, with an exit status.
