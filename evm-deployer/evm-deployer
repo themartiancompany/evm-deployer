@@ -453,7 +453,7 @@ _set_overrides() {
   elif [[ -z "${color}" ]]; then
     color="n"
   fi
-  _target_files_check
+  _target_contracts_check
   _set_override \
     "deploy" \
     "date" \
