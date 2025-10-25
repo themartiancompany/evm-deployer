@@ -217,11 +217,11 @@ _contract_index_publish() {
 }
 
 _contract_bytecode_check() {
-  if [[ "${_contract_bytecode}" != "" ]]; then
-    if [[ ! -e "${_contract_bytecode}" ]]; then
+  if [[ "${_contract_bytecode_path}" != "" ]]; then
+    if [[ ! -e "${_contract_bytecode_path}" ]]; then
       _msg=(
         "Contract bytecode file"
-        "'${_contract_bytecode}'"
+        "'${_contract_bytecode_path}'"
         "does not exist."
       )
       _msg_error \
@@ -232,11 +232,11 @@ _contract_bytecode_check() {
 }
 
 _contract_compiler_output_check() {
-  if [[ "${_contract_compiler_output}" != "" ]]; then
-    if [[ ! -e "${_contract_compiler_output}" ]]; then
+  if [[ "${_contract_compiler_output_path}" != "" ]]; then
+    if [[ ! -e "${_contract_compiler_output_path}" ]]; then
       _msg=(
         "Contract compiler output file"
-        "'${_contract_compiler_output_file}'"
+        "'${_contract_compiler_output_path}'"
         "does not exist."
       )
       _msg_error \
