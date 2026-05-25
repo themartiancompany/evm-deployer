@@ -37,7 +37,7 @@ install-scripts:
 	  "$(_PROJECT)/$(_PROJECT)" \
 	  "$(BIN_DIR)/$(_PROJECT)"
 	$(_INSTALL_EXE) \
-	  "$(_PROJECT)/deployer" \
+	  "$(_PROJECT)/nodejs/deployer" \
 	  "$(LIB_DIR)/deployer"
 
 install-doc:

@@ -1,0 +1,3 @@
+[submodule "evm-deployer/nodejs"]
+	path = evm-deployer/nodejs
+	url = github:themartiancompany/evm-deployer.js
